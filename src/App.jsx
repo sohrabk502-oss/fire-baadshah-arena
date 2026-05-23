@@ -17,6 +17,7 @@ import {
   remove,
   update,
 } from "firebase/database";
+import { createWallet } from "./services/walletService";
 
 export default function FireBaadshahArena() {
 
@@ -34,76 +35,261 @@ export default function FireBaadshahArena() {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
-  // ================= LOGIN STATES =================
+  // ================= LOGIN =================
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // ================= FORM STATES =================
+  // ================= TEAM REGISTER =================
 
   const [teamName, setTeamName] = useState("");
   const [leaderName, setLeaderName] = useState("");
   const [uid, setUid] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [members, setMembers] = useState("");
 
-  // ================= ADMIN DATA =================
+  // ================= REGISTRATIONS =================
 
   const [registrations, setRegistrations] = useState([]);
+
+  // ================= TOURNAMENT STATES =================
+
+  const [tournamentTitle, setTournamentTitle] =
+    useState("");
+
+  // FIXED ENTRY FEE
+  const [entryFee, setEntryFee] =
+    useState("");
+
+  // JOINED PLAYERS
+  const [totalTeams, setTotalTeams] =
+    useState("");
+
+  const [matchTime, setMatchTime] =
+    useState("");
+
+  // ================= AUTO PRIZE STATES =================
+
+  const [totalPrizePool, setTotalPrizePool] =
+    useState("");
+
+  const [adminProfit, setAdminProfit] =
+    useState("");
+
+  const [top1, setTop1] =
+    useState("");
+
+  const [top2, setTop2] =
+    useState("");
+
+  const [top3, setTop3] =
+    useState("");
+
+  const [remainingPrize, setRemainingPrize] =
+    useState("");
+
+  const [perPlayerPrize, setPerPlayerPrize] =
+    useState("");
+
+  // ================= LIVE TOURNAMENTS =================
+
+  const [liveTournaments, setLiveTournaments] =
+    useState([]);
+
+  // ================= AUTO PRIZE CALCULATION =================
+
+  useEffect(() => {
+
+    // FIXED ENTRY FEE
+    const fee =
+      Number(entryFee || 0);
+
+    // JOINED PLAYERS
+    const players =
+      Number(totalTeams || 0);
+
+    // TOTAL COLLECTION
+    const totalCollection =
+      fee * players;
+
+    // ADMIN PROFIT 20%
+    const profit =
+      totalCollection * 0.20;
+
+    // FINAL PRIZE POOL
+    const prizePool =
+      totalCollection - profit;
+
+    // TOP 1 = 25%
+    const firstPrize =
+      prizePool * 0.25;
+
+    // TOP 2 = 15%
+    const secondPrize =
+      prizePool * 0.15;
+
+    // TOP 3 = 10%
+    const thirdPrize =
+      prizePool * 0.10;
+
+    // REMAINING AMOUNT
+    const remainPrize =
+      prizePool -
+      (
+        firstPrize +
+        secondPrize +
+        thirdPrize
+      );
+
+    // REMAINING PLAYERS
+    const remainingPlayers = 17;
+
+    // TOP 4-20 EACH PLAYER
+    const eachPlayerPrize =
+      remainPrize / remainingPlayers;
+
+    // SAVE STATES
+
+    setAdminProfit(
+      profit.toFixed(2)
+    );
+
+    setTotalPrizePool(
+      prizePool.toFixed(2)
+    );
+
+    setTop1(
+      firstPrize.toFixed(2)
+    );
+
+    setTop2(
+      secondPrize.toFixed(2)
+    );
+
+    setTop3(
+      thirdPrize.toFixed(2)
+    );
+
+    setRemainingPrize(
+      remainPrize.toFixed(2)
+    );
+
+    setPerPlayerPrize(
+      eachPlayerPrize.toFixed(2)
+    );
+
+  }, [entryFee, totalTeams]);
 
   // ================= AUTH STATE =================
 
   useEffect(() => {
 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        (currentUser) => {
 
-      if (currentUser) {
+          if (currentUser) {
 
-        setUser(currentUser);
+            setUser(currentUser);
 
-        if (currentUser.email === ADMIN_EMAIL) {
-          setIsAdmin(true);
-        } else {
-          setIsAdmin(false);
+            if (
+              currentUser.email ===
+              ADMIN_EMAIL
+            ) {
+              setIsAdmin(true);
+            } else {
+              setIsAdmin(false);
+            }
+
+          } else {
+
+            setUser(null);
+            setIsAdmin(false);
+
+          }
         }
-
-      } else {
-
-        setUser(null);
-        setIsAdmin(false);
-
-      }
-    });
+      );
 
     return () => unsubscribe();
 
   }, []);
 
-  // ================= FETCH REALTIME DATA =================
+  // ================= FETCH REGISTRATIONS =================
 
   useEffect(() => {
 
-    const tournamentRef = ref(database, "tournaments");
+    const tournamentRef =
+      ref(database, "tournaments");
 
-    onValue(tournamentRef, (snapshot) => {
+    onValue(
+      tournamentRef,
+      (snapshot) => {
 
-      const data = snapshot.val();
+        const data =
+          snapshot.val();
 
-      if (data) {
+        if (data) {
 
-        const loadedData = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
-        }));
+          const loadedData =
+            Object.keys(data).map(
+              (key) => ({
+                id: key,
+                ...data[key],
+              })
+            );
 
-        setRegistrations(loadedData);
+          setRegistrations(
+            loadedData
+          );
 
-      } else {
+        } else {
 
-        setRegistrations([]);
+          setRegistrations([]);
 
+        }
       }
-    });
+    );
+
+  }, []);
+
+  // ================= FETCH LIVE TOURNAMENTS =================
+
+  useEffect(() => {
+
+    const liveRef =
+      ref(
+        database,
+        "liveTournaments"
+      );
+
+    onValue(
+      liveRef,
+      (snapshot) => {
+
+        const data =
+          snapshot.val();
+
+        if (data) {
+
+          const loadedData =
+            Object.keys(data).map(
+              (key) => ({
+                id: key,
+                ...data[key],
+              })
+            );
+
+          setLiveTournaments(
+            loadedData
+          );
+
+        } else {
+
+          setLiveTournaments([]);
+
+        }
+      }
+    );
 
   }, []);
 
@@ -119,14 +305,29 @@ export default function FireBaadshahArena() {
           email,
           password
         );
+        const user =
+  userCredential.user;
 
-      setUser(userCredential.user);
+// AUTO CREATE WALLET
+await createWallet(
+  user.uid,
+  "Player",
+  email
+);
 
-      if (email === ADMIN_EMAIL) {
+      setUser(
+        userCredential.user
+      );
+
+      if (
+        email === ADMIN_EMAIL
+      ) {
         setIsAdmin(true);
       }
 
-      alert("Account Created Successfully 🔥");
+      alert(
+        "Account Created Successfully 🔥"
+      );
 
       setShowRegister(false);
 
@@ -150,15 +351,21 @@ export default function FireBaadshahArena() {
           password
         );
 
-      setUser(userCredential.user);
+      setUser(
+        userCredential.user
+      );
 
-      if (email === ADMIN_EMAIL) {
+      if (
+        email === ADMIN_EMAIL
+      ) {
         setIsAdmin(true);
       } else {
         setIsAdmin(false);
       }
 
-      alert("Login Successful 🔥");
+      alert(
+        "Login Successful 🔥"
+      );
 
       setShowLogin(false);
 
@@ -171,151 +378,176 @@ export default function FireBaadshahArena() {
 
   // ================= LOGOUT =================
 
-  const logoutUser = async () => {
+  const logoutUser =
+    async () => {
 
-    await signOut(auth);
+      await signOut(auth);
 
-    setUser(null);
-    setIsAdmin(false);
+      setUser(null);
+      setIsAdmin(false);
 
-    alert("Logged Out");
-  };
+      alert("Logged Out");
+    };
 
-  // ================= SAVE TOURNAMENT =================
+  // ================= TEAM REGISTER =================
 
-  const submitTournament = async () => {
+  const submitTournament =
+    async () => {
 
-    try {
+      try {
 
-      const tournamentRef = ref(database, "tournaments");
+        const tournamentRef =
+          ref(
+            database,
+            "tournaments"
+          );
 
-      await push(tournamentRef, {
-        teamName,
-        leaderName,
-        uid,
-        whatsapp,
-        members,
-        status: "PENDING",
-        createdAt: new Date().toISOString(),
-      });
+        await push(
+          tournamentRef,
+          {
+            teamName,
+            leaderName,
+            uid,
+            whatsapp,
+            status:
+              "PENDING",
+          }
+        );
 
-      alert("Tournament Registered Successfully 🔥");
+        alert(
+          "Tournament Registered 🔥"
+        );
 
-      setTeamName("");
-      setLeaderName("");
-      setUid("");
-      setWhatsapp("");
-      setMembers("");
+        setTeamName("");
+        setLeaderName("");
+        setUid("");
+        setWhatsapp("");
 
-    } catch (error) {
+      } catch (error) {
 
-      alert(error.message);
+        alert(error.message);
 
-    }
-  };
+      }
+    };
 
-  // ================= DELETE TEAM =================
+  // ================= CREATE TOURNAMENT =================
 
-  const deleteTeam = async (id) => {
+  const createTournament =
+    async () => {
 
-    try {
+      try {
 
-      await remove(ref(database, `tournaments/${id}`));
+        const liveRef =
+          ref(
+            database,
+            "liveTournaments"
+          );
 
-      alert("Team Deleted ❌");
+        await push(
+          liveRef,
+          {
+            tournamentTitle,
+            entryFee,
+            totalTeams,
+            matchTime,
 
-    } catch (error) {
+            adminProfit,
+            totalPrizePool,
 
-      alert(error.message);
+            top1,
+            top2,
+            top3,
 
-    }
-  };
+            remainingPrize,
+            perPlayerPrize,
+          }
+        );
+
+        alert(
+          "Tournament Created Successfully 🔥"
+        );
+
+      } catch (error) {
+
+        alert(error.message);
+
+      }
+    };
 
   // ================= APPROVE TEAM =================
 
-  const approveTeam = async (id) => {
+  const approveTeam =
+    async (id) => {
 
-    try {
+      try {
 
-      await update(
-        ref(database, `tournaments/${id}`),
-        {
-          status: "APPROVED",
-        }
-      );
+        await update(
+          ref(
+            database,
+            `tournaments/${id}`
+          ),
+          {
+            status:
+              "APPROVED",
+          }
+        );
 
-      alert("Team Approved ✅");
+      } catch (error) {
 
-    } catch (error) {
+        alert(error.message);
 
-      alert(error.message);
+      }
+    };
 
-    }
-  };
+  // ================= DELETE TEAM =================
 
-  // ================= TOURNAMENTS =================
+  const deleteTeam =
+    async (id) => {
 
-  const tournaments = [
-    {
-      title: "Battle Royale Clash",
-      prize: "₹50,000",
-      teams: "48 Teams",
-      time: "8:00 PM",
-      status: "LIVE",
-    },
-    {
-      title: "Elite Squad War",
-      prize: "₹20,000",
-      teams: "24 Teams",
-      time: "9:30 PM",
-      status: "HOT",
-    },
-    {
-      title: "Booyah King Cup",
-      prize: "₹1,00,000",
-      teams: "72 Teams",
-      time: "7:00 PM",
-      status: "NEW",
-    },
-  ];
+      try {
+
+        await remove(
+          ref(
+            database,
+            `tournaments/${id}`
+          )
+        );
+
+      } catch (error) {
+
+        alert(error.message);
+
+      }
+    };
 
   return (
-    <div className="bg-black min-h-screen text-white overflow-hidden">
-
-      {/* BACKGROUND */}
-      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(255,80,0,0.15),transparent_40%)] pointer-events-none"></div>
+    <div className="bg-black min-h-screen text-white">
 
       {/* NAVBAR */}
-      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-orange-500/10">
+
+      <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-orange-500/10">
 
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
 
-          <h1 className="text-3xl md:text-4xl font-black tracking-widest text-orange-500">
+          <h1 className="text-4xl font-black text-orange-500">
             FIRE BAADSHAH ARENA
           </h1>
-
-          <div className="hidden md:flex items-center gap-8 text-gray-300 font-semibold">
-
-            <a href="#">Home</a>
-            <a href="#">Tournaments</a>
-            <a href="#">Register</a>
-            <a href="#">Contact</a>
-
-          </div>
 
           {user ? (
 
             <div className="flex items-center gap-4">
 
               {isAdmin && (
-                <span className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-bold">
+                <span className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full font-bold">
                   ADMIN
                 </span>
               )}
 
               <button
-                onClick={logoutUser}
-                className="bg-red-500 hover:bg-red-400 text-white px-6 py-3 rounded-2xl font-black"
+                onClick={
+                  logoutUser
+                }
+                className="bg-red-500 px-6 py-3 rounded-2xl font-black"
               >
                 LOGOUT
               </button>
@@ -327,15 +559,23 @@ export default function FireBaadshahArena() {
             <div className="flex gap-4">
 
               <button
-                onClick={() => setShowLogin(true)}
-                className="border border-orange-500 text-orange-400 px-5 py-3 rounded-2xl font-bold hover:bg-orange-500 hover:text-black transition"
+                onClick={() =>
+                  setShowLogin(
+                    true
+                  )
+                }
+                className="border border-orange-500 text-orange-400 px-5 py-3 rounded-2xl"
               >
                 LOGIN
               </button>
 
               <button
-                onClick={() => setShowRegister(true)}
-                className="bg-orange-500 hover:bg-orange-400 text-black px-6 py-3 rounded-2xl font-black"
+                onClick={() =>
+                  setShowRegister(
+                    true
+                  )
+                }
+                className="bg-orange-500 text-black px-6 py-3 rounded-2xl font-black"
               >
                 REGISTER
               </button>
@@ -349,43 +589,57 @@ export default function FireBaadshahArena() {
       </nav>
 
       {/* HERO */}
-      <section className="relative max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
 
-        <div>
+      <section className="text-center py-24 px-6">
 
-          <div className="inline-block bg-orange-500/10 border border-orange-500/20 text-orange-400 px-5 py-2 rounded-full mb-8">
-            🔥 India's Ultimate Free Fire Tournament Platform
-          </div>
+        <h1 className="text-7xl font-black">
 
-          <h1 className="text-5xl md:text-7xl font-black leading-tight">
+          FIRE BAADSHAH <br />
 
-            DOMINATE THE <br />
+          <span className="text-orange-500">
+            ARENA
+          </span>
 
-            <span className="text-orange-500">
-              BATTLEFIELD
-            </span>
+        </h1>
 
-          </h1>
+        <p className="text-orange-400 mt-6 text-xl font-bold">
+  1 Coin = 1 INR Value Inside Platform
+</p>
 
-          <p className="mt-8 text-gray-400 text-lg leading-8 max-w-xl">
-            Join elite Free Fire tournaments and dominate the battlefield.
-          </p>
+<p className="text-gray-500 mt-4 text-sm max-w-2xl mx-auto leading-7">
+  Coins are virtual esports reward units used for tournaments,
+  rankings, rewards, and competitive gameplay inside
+  FIRE BAADSHAH ARENA.
+</p>
+<div className="max-w-4xl mx-auto px-6 pb-10">
 
-        </div>
+  <div className="bg-[#111] border border-orange-500/10 rounded-3xl p-6 text-center">
 
-        <div className="relative flex justify-center">
+    <h3 className="text-2xl font-black text-orange-500 mb-4">
+      PLATFORM NOTICE
+    </h3>
 
-          <img
-            src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop"
-            alt="gaming"
-            className="rounded-[40px] border border-orange-500/20 shadow-[0_0_40px_rgba(255,80,0,0.3)] w-full max-w-lg h-[600px] object-cover"
-          />
+    <p className="text-gray-300 leading-8">
+      Coins are virtual tournament reward units used inside
+      FIRE BAADSHAH ARENA.
+    </p>
 
-        </div>
+    <p className="text-orange-400 mt-4">
+      1 Coin = 1 INR Value Inside Platform
+    </p>
 
+    <p className="text-gray-500 mt-4 text-sm">
+      FIRE BAADSHAH ARENA is a competitive esports platform
+      based on skill matches and tournament gameplay.
+    </p>
+
+  </div>
+
+</div>
       </section>
 
-      {/* TOURNAMENTS */}
+      {/* LIVE TOURNAMENTS */}
+
       <section className="max-w-7xl mx-auto px-6 py-20">
 
         <h2 className="text-5xl font-black text-orange-500 mb-12">
@@ -394,48 +648,115 @@ export default function FireBaadshahArena() {
 
         <div className="grid md:grid-cols-3 gap-8">
 
-          {tournaments.map((item, index) => (
+          {liveTournaments.map(
+            (item) => (
 
-            <div
-              key={index}
-              className="bg-[#111] border border-orange-500/10 rounded-[35px] overflow-hidden"
-            >
+              <div
+                key={item.id}
+                className="bg-[#111] rounded-[35px] p-8 border border-orange-500/10"
+              >
 
-              <img
-                src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1971&auto=format&fit=crop"
-                alt="tournament"
-                className="w-full h-60 object-cover"
-              />
-
-              <div className="p-7">
-
-                <div className="flex justify-between mb-6">
+                <div className="flex justify-between mb-5">
 
                   <span className="bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-black">
-                    {item.status}
+                    LIVE
                   </span>
 
-                  <span className="text-gray-400">
-                    {item.time}
+                  <span>
+                    {
+                      item.matchTime
+                    }
                   </span>
 
                 </div>
 
-                <h3 className="text-3xl font-black mb-8">
-                  {item.title}
+                <h3 className="text-3xl font-black mb-6">
+                  {
+                    item.tournamentTitle
+                  }
                 </h3>
 
-                <div className="space-y-4 text-lg text-gray-300">
+                <div className="space-y-4 text-lg">
 
                   <div className="flex justify-between">
-                    <span>Teams</span>
-                    <span>{item.teams}</span>
+                    <span>
+                      Entry Fee
+                    </span>
+
+                    <span className="text-orange-400">
+                      {item.entryFee} Coins
+                    </span>
                   </div>
 
                   <div className="flex justify-between">
-                    <span>Prize Pool</span>
-                    <span className="text-orange-500 font-black">
-                      {item.prize}
+                    <span>
+                      Joined Players
+                    </span>
+
+                    <span>
+                      {
+                        item.totalTeams
+                      }
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>
+                      Admin Profit
+                    </span>
+
+                    <span className="text-yellow-400">
+                      {item.adminProfit} Coins
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>
+                      Prize Pool
+                    </span>
+
+                    <span className="text-orange-500">
+                      {item.totalPrizePool} Coins
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>
+                      Top 1
+                    </span>
+
+                    <span>
+                      {item.top1} Coins
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>
+                      Top 2
+                    </span>
+
+                    <span>
+                      {item.top2} Coins
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>
+                      Top 3
+                    </span>
+
+                    <span>
+                      {item.top3} Coins
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span>
+                      Top 4-20
+                    </span>
+
+                    <span className="text-green-400">
+                      {item.perPlayerPrize} Coins each
                     </span>
                   </div>
 
@@ -443,20 +764,20 @@ export default function FireBaadshahArena() {
 
               </div>
 
-            </div>
-
-          ))}
+            )
+          )}
 
         </div>
 
       </section>
 
-      {/* REGISTER FORM */}
-      <section className="max-w-4xl mx-auto px-6 py-24">
+      {/* TEAM REGISTER */}
 
-        <div className="bg-[#111] border border-orange-500/10 rounded-[40px] p-10">
+      <section className="max-w-4xl mx-auto px-6 py-20">
 
-          <h2 className="text-5xl font-black text-center text-orange-500 mb-12">
+        <div className="bg-[#111] rounded-[40px] p-10">
+
+          <h2 className="text-5xl font-black text-orange-500 text-center mb-10">
             REGISTER YOUR SQUAD
           </h2>
 
@@ -466,47 +787,57 @@ export default function FireBaadshahArena() {
               type="text"
               placeholder="Team Name"
               value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
+              onChange={(e) =>
+                setTeamName(
+                  e.target.value
+                )
+              }
+              className="bg-black rounded-2xl px-5 py-4 outline-none"
             />
 
             <input
               type="text"
               placeholder="Leader Name"
               value={leaderName}
-              onChange={(e) => setLeaderName(e.target.value)}
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
+              onChange={(e) =>
+                setLeaderName(
+                  e.target.value
+                )
+              }
+              className="bg-black rounded-2xl px-5 py-4 outline-none"
             />
 
             <input
               type="text"
               placeholder="Free Fire UID"
               value={uid}
-              onChange={(e) => setUid(e.target.value)}
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
+              onChange={(e) =>
+                setUid(
+                  e.target.value
+                )
+              }
+              className="bg-black rounded-2xl px-5 py-4 outline-none"
             />
 
             <input
               type="text"
-              placeholder="WhatsApp Number"
+              placeholder="WhatsApp"
               value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
-            />
-
-            <input
-              type="text"
-              placeholder="Team Members"
-              value={members}
-              onChange={(e) => setMembers(e.target.value)}
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none md:col-span-2"
+              onChange={(e) =>
+                setWhatsapp(
+                  e.target.value
+                )
+              }
+              className="bg-black rounded-2xl px-5 py-4 outline-none"
             />
 
           </div>
 
           <button
-            onClick={submitTournament}
-            className="w-full mt-10 bg-orange-500 hover:bg-orange-400 text-black py-5 rounded-2xl text-xl font-black"
+            onClick={
+              submitTournament
+            }
+            className="w-full mt-10 bg-orange-500 text-black py-5 rounded-2xl text-xl font-black"
           >
             SUBMIT REGISTRATION
           </button>
@@ -515,194 +846,160 @@ export default function FireBaadshahArena() {
 
       </section>
 
-      {/* ADMIN PANEL */}
+      {/* CREATE TOURNAMENT */}
+
       {isAdmin && (
 
-        <section className="max-w-7xl mx-auto px-6 py-24">
+        <section className="max-w-5xl mx-auto px-6 py-20">
 
-          <h2 className="text-5xl font-black text-orange-500 mb-12">
-            ADMIN PANEL
-          </h2>
+          <div className="bg-[#111] rounded-[40px] p-10">
 
-          <div className="bg-[#111] border border-orange-500/10 rounded-[40px] overflow-hidden">
+            <h2 className="text-5xl font-black text-orange-500 text-center mb-10">
+              CREATE TOURNAMENT
+            </h2>
 
-            <div className="overflow-x-auto">
+            <div className="grid md:grid-cols-2 gap-6">
 
-              <table className="w-full text-left">
+              <input
+                type="text"
+                placeholder="Tournament Title"
+                value={
+                  tournamentTitle
+                }
+                onChange={(e) =>
+                  setTournamentTitle(
+                    e.target.value
+                  )
+                }
+                className="bg-black rounded-2xl px-5 py-4 outline-none"
+              />
 
-                <thead className="bg-orange-500 text-black">
+              <input
+                type="number"
+                placeholder="Entry Fee (Coins)"
+                value={entryFee}
+                onChange={(e) =>
+                  setEntryFee(
+                    e.target.value
+                  )
+                }
+                className="bg-black rounded-2xl px-5 py-4 outline-none"
+              />
 
-                  <tr>
-                    <th className="p-5">Team</th>
-                    <th className="p-5">Leader</th>
-                    <th className="p-5">UID</th>
-                    <th className="p-5">Status</th>
-                    <th className="p-5">Actions</th>
-                  </tr>
+              <input
+                type="number"
+                placeholder="Joined Players"
+                value={totalTeams}
+                onChange={(e) =>
+                  setTotalTeams(
+                    e.target.value
+                  )
+                }
+                className="bg-black rounded-2xl px-5 py-4 outline-none"
+              />
 
-                </thead>
-
-                <tbody>
-
-                  {registrations.map((team) => (
-
-                    <tr
-                      key={team.id}
-                      className="border-b border-white/10"
-                    >
-
-                      <td className="p-5">
-                        {team.teamName}
-                      </td>
-
-                      <td className="p-5">
-                        {team.leaderName}
-                      </td>
-
-                      <td className="p-5">
-                        {team.uid}
-                      </td>
-
-                      <td className="p-5">
-
-                        <span
-                          className={`px-4 py-2 rounded-full text-sm font-bold ${
-                            team.status === "APPROVED"
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-yellow-500/20 text-yellow-400"
-                          }`}
-                        >
-                          {team.status}
-                        </span>
-
-                      </td>
-
-                      <td className="p-5 flex gap-3">
-
-                        <button
-                          onClick={() => approveTeam(team.id)}
-                          className="bg-green-500 hover:bg-green-400 text-black px-4 py-2 rounded-xl font-bold"
-                        >
-                          APPROVE
-                        </button>
-
-                        <button
-                          onClick={() => deleteTeam(team.id)}
-                          className="bg-red-500 hover:bg-red-400 text-white px-4 py-2 rounded-xl font-bold"
-                        >
-                          DELETE
-                        </button>
-
-                      </td>
-
-                    </tr>
-
-                  ))}
-
-                </tbody>
-
-              </table>
+              <input
+                type="text"
+                placeholder="Match Time"
+                value={matchTime}
+                onChange={(e) =>
+                  setMatchTime(
+                    e.target.value
+                  )
+                }
+                className="bg-black rounded-2xl px-5 py-4 outline-none"
+              />
 
             </div>
+
+            {/* AUTO DISTRIBUTION */}
+
+            <div className="mt-10 bg-black rounded-3xl p-8 border border-orange-500/10">
+
+              <h3 className="text-3xl font-black text-orange-500 mb-6">
+                AUTO PRIZE DISTRIBUTION
+              </h3>
+
+              <div className="space-y-4 text-xl">
+
+                <div className="flex justify-between">
+                  <span>
+                    Admin Profit
+                  </span>
+
+                  <span className="text-yellow-400">
+                    {adminProfit} Coins
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>
+                    Prize Pool
+                  </span>
+
+                  <span className="text-orange-500">
+                    {totalPrizePool} Coins
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>
+                    Top 1
+                  </span>
+
+                  <span>
+                    {top1} Coins
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>
+                    Top 2
+                  </span>
+
+                  <span>
+                    {top2} Coins
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>
+                    Top 3
+                  </span>
+
+                  <span>
+                    {top3} Coins
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>
+                    Top 4-20
+                  </span>
+
+                  <span className="text-green-400">
+                    {perPlayerPrize} Coins each
+                  </span>
+                </div>
+
+              </div>
+
+            </div>
+
+            <button
+              onClick={
+                createTournament
+              }
+              className="w-full mt-10 bg-orange-500 text-black py-5 rounded-2xl text-xl font-black"
+            >
+              CREATE TOURNAMENT
+            </button>
 
           </div>
 
         </section>
 
       )}
-
-      {/* LOGIN POPUP */}
-      {showLogin && (
-
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-
-          <div className="bg-[#111] p-8 rounded-[30px] w-[90%] max-w-md">
-
-            <h2 className="text-3xl font-black text-orange-500 mb-6 text-center">
-              LOGIN
-            </h2>
-
-            <div className="space-y-5">
-
-              <input
-                type="email"
-                placeholder="Enter Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
-              />
-
-              <input
-                type="password"
-                placeholder="Enter Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
-              />
-
-              <button
-                onClick={loginUser}
-                className="w-full bg-orange-500 text-black py-4 rounded-2xl font-black"
-              >
-                LOGIN
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-      {/* REGISTER POPUP */}
-      {showRegister && (
-
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-
-          <div className="bg-[#111] p-8 rounded-[30px] w-[90%] max-w-md">
-
-            <h2 className="text-3xl font-black text-orange-500 mb-6 text-center">
-              REGISTER
-            </h2>
-
-            <div className="space-y-5">
-
-              <input
-                type="email"
-                placeholder="Enter Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
-              />
-
-              <input
-                type="password"
-                placeholder="Enter Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
-              />
-
-              <button
-                onClick={registerUser}
-                className="w-full bg-orange-500 text-black py-4 rounded-2xl font-black"
-              >
-                CREATE ACCOUNT
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
-      {/* FOOTER */}
-      <footer className="border-t border-orange-500/10 text-center py-10 text-gray-500">
-        © 2026 FIRE BAADSHAH ARENA — Built For Hardcore Gamers 🔥
-      </footer>
 
     </div>
   );
