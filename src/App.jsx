@@ -1,23 +1,118 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   auth,
+  database,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
 } from "./firebase";
 
+import { onAuthStateChanged } from "firebase/auth";
+
+import {
+  ref,
+  push,
+  onValue,
+  remove,
+  update,
+} from "firebase/database";
+
 export default function FireBaadshahArena() {
+
+  // ================= ADMIN EMAIL =================
+
+  const ADMIN_EMAIL = "sohrabk502@gmail.com";
+
+  // ================= AUTH =================
+
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // ================= POPUPS =================
+
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+
+  // ================= LOGIN STATES =================
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const [user, setUser] = useState(null);
+  // ================= FORM STATES =================
+
+  const [teamName, setTeamName] = useState("");
+  const [leaderName, setLeaderName] = useState("");
+  const [uid, setUid] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [members, setMembers] = useState("");
+
+  // ================= ADMIN DATA =================
+
+  const [registrations, setRegistrations] = useState([]);
+
+  // ================= AUTH STATE =================
+
+  useEffect(() => {
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+
+      if (currentUser) {
+
+        setUser(currentUser);
+
+        if (currentUser.email === ADMIN_EMAIL) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+
+      } else {
+
+        setUser(null);
+        setIsAdmin(false);
+
+      }
+    });
+
+    return () => unsubscribe();
+
+  }, []);
+
+  // ================= FETCH REALTIME DATA =================
+
+  useEffect(() => {
+
+    const tournamentRef = ref(database, "tournaments");
+
+    onValue(tournamentRef, (snapshot) => {
+
+      const data = snapshot.val();
+
+      if (data) {
+
+        const loadedData = Object.keys(data).map((key) => ({
+          id: key,
+          ...data[key],
+        }));
+
+        setRegistrations(loadedData);
+
+      } else {
+
+        setRegistrations([]);
+
+      }
+    });
+
+  }, []);
+
+  // ================= REGISTER USER =================
 
   const registerUser = async () => {
+
     try {
+
       const userCredential =
         await createUserWithEmailAndPassword(
           auth,
@@ -27,17 +122,27 @@ export default function FireBaadshahArena() {
 
       setUser(userCredential.user);
 
+      if (email === ADMIN_EMAIL) {
+        setIsAdmin(true);
+      }
+
       alert("Account Created Successfully 🔥");
 
       setShowRegister(false);
 
     } catch (error) {
+
       alert(error.message);
+
     }
   };
 
+  // ================= LOGIN USER =================
+
   const loginUser = async () => {
+
     try {
+
       const userCredential =
         await signInWithEmailAndPassword(
           auth,
@@ -47,22 +152,108 @@ export default function FireBaadshahArena() {
 
       setUser(userCredential.user);
 
+      if (email === ADMIN_EMAIL) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+
       alert("Login Successful 🔥");
 
       setShowLogin(false);
 
     } catch (error) {
+
       alert(error.message);
+
     }
   };
 
+  // ================= LOGOUT =================
+
   const logoutUser = async () => {
+
     await signOut(auth);
 
     setUser(null);
+    setIsAdmin(false);
 
     alert("Logged Out");
   };
+
+  // ================= SAVE TOURNAMENT =================
+
+  const submitTournament = async () => {
+
+    try {
+
+      const tournamentRef = ref(database, "tournaments");
+
+      await push(tournamentRef, {
+        teamName,
+        leaderName,
+        uid,
+        whatsapp,
+        members,
+        status: "PENDING",
+        createdAt: new Date().toISOString(),
+      });
+
+      alert("Tournament Registered Successfully 🔥");
+
+      setTeamName("");
+      setLeaderName("");
+      setUid("");
+      setWhatsapp("");
+      setMembers("");
+
+    } catch (error) {
+
+      alert(error.message);
+
+    }
+  };
+
+  // ================= DELETE TEAM =================
+
+  const deleteTeam = async (id) => {
+
+    try {
+
+      await remove(ref(database, `tournaments/${id}`));
+
+      alert("Team Deleted ❌");
+
+    } catch (error) {
+
+      alert(error.message);
+
+    }
+  };
+
+  // ================= APPROVE TEAM =================
+
+  const approveTeam = async (id) => {
+
+    try {
+
+      await update(
+        ref(database, `tournaments/${id}`),
+        {
+          status: "APPROVED",
+        }
+      );
+
+      alert("Team Approved ✅");
+
+    } catch (error) {
+
+      alert(error.message);
+
+    }
+  };
+
+  // ================= TOURNAMENTS =================
 
   const tournaments = [
     {
@@ -91,44 +282,48 @@ export default function FireBaadshahArena() {
   return (
     <div className="bg-black min-h-screen text-white overflow-hidden">
 
-      {/* BACKGROUND EFFECT */}
+      {/* BACKGROUND */}
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(255,80,0,0.15),transparent_40%)] pointer-events-none"></div>
 
       {/* NAVBAR */}
       <nav className="sticky top-0 z-50 backdrop-blur-xl bg-black/40 border-b border-orange-500/10">
+
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
 
-          <h1 className="text-3xl md:text-4xl font-black tracking-widest text-orange-500 drop-shadow-[0_0_15px_rgba(255,80,0,0.8)]">
+          <h1 className="text-3xl md:text-4xl font-black tracking-widest text-orange-500">
             FIRE BAADSHAH ARENA
           </h1>
 
           <div className="hidden md:flex items-center gap-8 text-gray-300 font-semibold">
-            <a href="#" className="hover:text-orange-500 transition">
-              Home
-            </a>
 
-            <a href="#" className="hover:text-orange-500 transition">
-              Tournaments
-            </a>
+            <a href="#">Home</a>
+            <a href="#">Tournaments</a>
+            <a href="#">Register</a>
+            <a href="#">Contact</a>
 
-            <a href="#" className="hover:text-orange-500 transition">
-              Register
-            </a>
-
-            <a href="#" className="hover:text-orange-500 transition">
-              Contact
-            </a>
           </div>
 
-          {/* AUTH BUTTONS */}
           {user ? (
-            <button
-              onClick={logoutUser}
-              className="bg-red-500 hover:bg-red-400 text-white px-6 py-3 rounded-2xl font-black transition"
-            >
-              LOGOUT
-            </button>
+
+            <div className="flex items-center gap-4">
+
+              {isAdmin && (
+                <span className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-bold">
+                  ADMIN
+                </span>
+              )}
+
+              <button
+                onClick={logoutUser}
+                className="bg-red-500 hover:bg-red-400 text-white px-6 py-3 rounded-2xl font-black"
+              >
+                LOGOUT
+              </button>
+
+            </div>
+
           ) : (
+
             <div className="flex gap-4">
 
               <button
@@ -140,17 +335,20 @@ export default function FireBaadshahArena() {
 
               <button
                 onClick={() => setShowRegister(true)}
-                className="bg-orange-500 hover:bg-orange-400 text-black px-6 py-3 rounded-2xl font-black shadow-[0_0_20px_rgba(255,100,0,0.6)] transition hover:scale-105"
+                className="bg-orange-500 hover:bg-orange-400 text-black px-6 py-3 rounded-2xl font-black"
               >
                 REGISTER
               </button>
 
             </div>
+
           )}
+
         </div>
+
       </nav>
 
-      {/* HERO SECTION */}
+      {/* HERO */}
       <section className="relative max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
 
         <div>
@@ -160,71 +358,47 @@ export default function FireBaadshahArena() {
           </div>
 
           <h1 className="text-5xl md:text-7xl font-black leading-tight">
+
             DOMINATE THE <br />
 
-            <span className="text-orange-500 drop-shadow-[0_0_20px_rgba(255,80,0,0.8)]">
+            <span className="text-orange-500">
               BATTLEFIELD
             </span>
+
           </h1>
 
           <p className="mt-8 text-gray-400 text-lg leading-8 max-w-xl">
-            Join elite Free Fire tournaments, fight pro squads, win massive cash
-            prizes, and become the next legend in FIRE BAADSHAH ARENA.
+            Join elite Free Fire tournaments and dominate the battlefield.
           </p>
 
-          <div className="flex flex-wrap gap-5 mt-10">
-
-            <button className="bg-orange-500 hover:bg-orange-400 text-black px-8 py-4 rounded-2xl text-lg font-black transition hover:scale-105 shadow-[0_0_25px_rgba(255,80,0,0.7)]">
-              PLAY NOW
-            </button>
-
-            <button className="border border-orange-500 text-orange-400 px-8 py-4 rounded-2xl text-lg font-bold hover:bg-orange-500 hover:text-black transition">
-              VIEW MATCHES
-            </button>
-
-          </div>
         </div>
 
-        {/* HERO IMAGE */}
         <div className="relative flex justify-center">
-
-          <div className="absolute w-[400px] h-[400px] bg-orange-500/20 blur-3xl rounded-full"></div>
 
           <img
             src="https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=2070&auto=format&fit=crop"
             alt="gaming"
-            className="relative rounded-[40px] border border-orange-500/20 shadow-[0_0_40px_rgba(255,80,0,0.3)] w-full max-w-lg h-[600px] object-cover"
+            className="rounded-[40px] border border-orange-500/20 shadow-[0_0_40px_rgba(255,80,0,0.3)] w-full max-w-lg h-[600px] object-cover"
           />
+
         </div>
+
       </section>
 
-      {/* LIVE TOURNAMENTS */}
+      {/* TOURNAMENTS */}
       <section className="max-w-7xl mx-auto px-6 py-20">
 
-        <div className="flex items-center justify-between flex-wrap gap-4 mb-14">
-
-          <div>
-            <h2 className="text-5xl font-black text-orange-500">
-              LIVE TOURNAMENTS
-            </h2>
-
-            <p className="text-gray-400 mt-4">
-              Register now and secure your squad slot before it fills up.
-            </p>
-          </div>
-
-          <button className="bg-white/5 border border-white/10 px-6 py-3 rounded-2xl hover:bg-orange-500 hover:text-black transition">
-            EXPLORE ALL
-          </button>
-
-        </div>
+        <h2 className="text-5xl font-black text-orange-500 mb-12">
+          LIVE TOURNAMENTS
+        </h2>
 
         <div className="grid md:grid-cols-3 gap-8">
 
           {tournaments.map((item, index) => (
+
             <div
               key={index}
-              className="bg-gradient-to-b from-[#111] to-[#050505] border border-orange-500/10 rounded-[35px] overflow-hidden hover:-translate-y-3 transition duration-300 shadow-[0_0_25px_rgba(255,80,0,0.15)]"
+              className="bg-[#111] border border-orange-500/10 rounded-[35px] overflow-hidden"
             >
 
               <img
@@ -235,7 +409,7 @@ export default function FireBaadshahArena() {
 
               <div className="p-7">
 
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex justify-between mb-6">
 
                   <span className="bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-black">
                     {item.status}
@@ -260,33 +434,27 @@ export default function FireBaadshahArena() {
 
                   <div className="flex justify-between">
                     <span>Prize Pool</span>
-
                     <span className="text-orange-500 font-black">
                       {item.prize}
                     </span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>Entry Fee</span>
-                    <span>₹49</span>
-                  </div>
-
                 </div>
 
-                <button className="w-full mt-8 bg-orange-500 hover:bg-orange-400 text-black py-4 rounded-2xl text-lg font-black transition hover:scale-105">
-                  REGISTER NOW
-                </button>
-
               </div>
+
             </div>
+
           ))}
+
         </div>
+
       </section>
 
       {/* REGISTER FORM */}
       <section className="max-w-4xl mx-auto px-6 py-24">
 
-        <div className="bg-gradient-to-b from-[#111] to-[#050505] border border-orange-500/10 rounded-[40px] p-10 shadow-[0_0_40px_rgba(255,80,0,0.15)]">
+        <div className="bg-[#111] border border-orange-500/10 rounded-[40px] p-10">
 
           <h2 className="text-5xl font-black text-center text-orange-500 mb-12">
             REGISTER YOUR SQUAD
@@ -297,52 +465,158 @@ export default function FireBaadshahArena() {
             <input
               type="text"
               placeholder="Team Name"
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
             />
 
             <input
               type="text"
               placeholder="Leader Name"
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
+              value={leaderName}
+              onChange={(e) => setLeaderName(e.target.value)}
+              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
             />
 
             <input
               type="text"
               placeholder="Free Fire UID"
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
+              value={uid}
+              onChange={(e) => setUid(e.target.value)}
+              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
             />
 
             <input
               type="text"
               placeholder="WhatsApp Number"
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none focus:border-orange-500"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none"
             />
 
             <input
               type="text"
               placeholder="Team Members"
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none focus:border-orange-500 md:col-span-2"
-            />
-
-            <input
-              type="file"
-              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none focus:border-orange-500 md:col-span-2"
+              value={members}
+              onChange={(e) => setMembers(e.target.value)}
+              className="bg-black border border-orange-500/20 rounded-2xl px-5 py-4 outline-none md:col-span-2"
             />
 
           </div>
 
-          <button className="w-full mt-10 bg-orange-500 hover:bg-orange-400 text-black py-5 rounded-2xl text-xl font-black transition hover:scale-105 shadow-[0_0_30px_rgba(255,80,0,0.6)]">
+          <button
+            onClick={submitTournament}
+            className="w-full mt-10 bg-orange-500 hover:bg-orange-400 text-black py-5 rounded-2xl text-xl font-black"
+          >
             SUBMIT REGISTRATION
           </button>
 
         </div>
+
       </section>
+
+      {/* ADMIN PANEL */}
+      {isAdmin && (
+
+        <section className="max-w-7xl mx-auto px-6 py-24">
+
+          <h2 className="text-5xl font-black text-orange-500 mb-12">
+            ADMIN PANEL
+          </h2>
+
+          <div className="bg-[#111] border border-orange-500/10 rounded-[40px] overflow-hidden">
+
+            <div className="overflow-x-auto">
+
+              <table className="w-full text-left">
+
+                <thead className="bg-orange-500 text-black">
+
+                  <tr>
+                    <th className="p-5">Team</th>
+                    <th className="p-5">Leader</th>
+                    <th className="p-5">UID</th>
+                    <th className="p-5">Status</th>
+                    <th className="p-5">Actions</th>
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  {registrations.map((team) => (
+
+                    <tr
+                      key={team.id}
+                      className="border-b border-white/10"
+                    >
+
+                      <td className="p-5">
+                        {team.teamName}
+                      </td>
+
+                      <td className="p-5">
+                        {team.leaderName}
+                      </td>
+
+                      <td className="p-5">
+                        {team.uid}
+                      </td>
+
+                      <td className="p-5">
+
+                        <span
+                          className={`px-4 py-2 rounded-full text-sm font-bold ${
+                            team.status === "APPROVED"
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-yellow-500/20 text-yellow-400"
+                          }`}
+                        >
+                          {team.status}
+                        </span>
+
+                      </td>
+
+                      <td className="p-5 flex gap-3">
+
+                        <button
+                          onClick={() => approveTeam(team.id)}
+                          className="bg-green-500 hover:bg-green-400 text-black px-4 py-2 rounded-xl font-bold"
+                        >
+                          APPROVE
+                        </button>
+
+                        <button
+                          onClick={() => deleteTeam(team.id)}
+                          className="bg-red-500 hover:bg-red-400 text-white px-4 py-2 rounded-xl font-bold"
+                        >
+                          DELETE
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      )}
 
       {/* LOGIN POPUP */}
       {showLogin && (
+
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
 
-          <div className="bg-[#111] p-8 rounded-[30px] w-[90%] max-w-md border border-orange-500/20">
+          <div className="bg-[#111] p-8 rounded-[30px] w-[90%] max-w-md">
 
             <h2 className="text-3xl font-black text-orange-500 mb-6 text-center">
               LOGIN
@@ -373,23 +647,20 @@ export default function FireBaadshahArena() {
                 LOGIN
               </button>
 
-              <button
-                onClick={() => setShowLogin(false)}
-                className="w-full border border-white/10 py-4 rounded-2xl"
-              >
-                CLOSE
-              </button>
-
             </div>
+
           </div>
+
         </div>
+
       )}
 
       {/* REGISTER POPUP */}
       {showRegister && (
+
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
 
-          <div className="bg-[#111] p-8 rounded-[30px] w-[90%] max-w-md border border-orange-500/20">
+          <div className="bg-[#111] p-8 rounded-[30px] w-[90%] max-w-md">
 
             <h2 className="text-3xl font-black text-orange-500 mb-6 text-center">
               REGISTER
@@ -420,16 +691,12 @@ export default function FireBaadshahArena() {
                 CREATE ACCOUNT
               </button>
 
-              <button
-                onClick={() => setShowRegister(false)}
-                className="w-full border border-white/10 py-4 rounded-2xl"
-              >
-                CLOSE
-              </button>
-
             </div>
+
           </div>
+
         </div>
+
       )}
 
       {/* FOOTER */}
