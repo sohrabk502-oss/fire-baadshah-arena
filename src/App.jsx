@@ -999,6 +999,96 @@ await createWallet(
 
         </section>
 
+            )}
+
+      {/* LOGIN POPUP */}
+
+      {showLogin && (
+
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+
+          <div className="bg-[#111] p-8 rounded-3xl w-[400px] border border-orange-500/20">
+
+            <h2 className="text-3xl font-black text-orange-500 mb-6 text-center">
+              LOGIN
+            </h2>
+
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
+              className="w-full bg-black p-4 rounded-2xl mb-4 outline-none"
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              className="w-full bg-black p-4 rounded-2xl mb-6 outline-none"
+            />
+
+            <button
+              onClick={loginUser}
+              className="w-full bg-orange-500 text-black py-4 rounded-2xl font-black"
+            >
+              LOGIN
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+
+      {/* REGISTER POPUP */}
+
+      {showRegister && (
+
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+
+          <div className="bg-[#111] p-8 rounded-3xl w-[400px] border border-orange-500/20">
+
+            <h2 className="text-3xl font-black text-orange-500 mb-6 text-center">
+              REGISTER
+            </h2>
+
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) =>
+                setEmail(e.target.value)
+              }
+              className="w-full bg-black p-4 rounded-2xl mb-4 outline-none"
+            />
+
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) =>
+                setPassword(e.target.value)
+              }
+              className="w-full bg-black p-4 rounded-2xl mb-6 outline-none"
+            />
+
+            <button
+              onClick={registerUser}
+              className="w-full bg-orange-500 text-black py-4 rounded-2xl font-black"
+            >
+              CREATE ACCOUNT
+            </button>
+
+          </div>
+
+        </div>
+
       )}
 
     </div>
