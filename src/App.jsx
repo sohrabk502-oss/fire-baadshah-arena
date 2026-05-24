@@ -203,6 +203,10 @@ const [manualCoins,
   const [showWallet, setShowWallet] =
   useState(false);
 
+  const [adminPage,
+setAdminPage] =
+useState("topup");
+
 const [showContact, setShowContact] =
   useState(false);
 
@@ -3673,8 +3677,38 @@ ADD COINS
 
 
 {/* PAYMENT REQUESTS */}
+<div className="flex gap-4 overflow-x-auto mb-8">
 
-{isAdmin && (
+<button
+onClick={() =>
+setAdminPage("topup")
+}
+className={`px-6 py-3 rounded-2xl font-black whitespace-nowrap ${
+adminPage === "topup"
+? "bg-orange-500 text-black"
+: "bg-black text-white border border-orange-500/20"
+}`}
+>
+TOPUP REQUESTS
+</button>
+
+<button
+onClick={() =>
+setAdminPage("withdraw")
+}
+className={`px-6 py-3 rounded-2xl font-black whitespace-nowrap ${
+adminPage === "withdraw"
+? "bg-green-500 text-black"
+: "bg-black text-white border border-green-500/20"
+}`}
+>
+WITHDRAW REQUESTS
+</button>
+
+</div>
+
+{isAdmin &&
+adminPage === "topup" && (
 
   <section className="max-w-5xl mx-auto px-6 py-20">
 
@@ -3721,7 +3755,7 @@ ADD COINS
 
 </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2">
 
         {paymentRequests
 .filter((item) => {
@@ -3876,7 +3910,8 @@ ADD COINS
 )}
 {/* WITHDRAW REQUESTS */}
 
-{isAdmin && (
+{isAdmin &&
+adminPage === "withdraw" && (
 
 <section className="max-w-5xl mx-auto px-6 py-20">
 
@@ -3886,7 +3921,7 @@ ADD COINS
       WITHDRAW REQUESTS
     </h2>
 
-    <div className="space-y-6">
+    <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2">
 
       {withdrawRequests
 .filter((item) => {
