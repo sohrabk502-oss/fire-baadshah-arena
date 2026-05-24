@@ -25,6 +25,7 @@ export const createWallet = async (
       name,
       email,
       coins: 0,
+      nameChanged: false,
       createdAt: serverTimestamp(),
     });
 
