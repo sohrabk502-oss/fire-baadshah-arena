@@ -207,6 +207,21 @@ const [manualCoins,
 setAdminPage] =
 useState("topup");
 
+const [
+searchWithdraw,
+setSearchWithdraw
+] = useState("");
+
+const [
+withdrawFromDate,
+setWithdrawFromDate
+] = useState("");
+
+const [
+withdrawToDate,
+setWithdrawToDate
+] = useState("");
+
 const [showContact, setShowContact] =
   useState(false);
 
@@ -3921,24 +3936,88 @@ adminPage === "withdraw" && (
       WITHDRAW REQUESTS
     </h2>
 
+    <div className="grid md:grid-cols-3 gap-4 mb-8">
+
+<input
+type="text"
+placeholder="Search ID / Email"
+value={searchWithdraw}
+onChange={(e) =>
+setSearchWithdraw(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<input
+type="date"
+value={withdrawFromDate}
+onChange={(e) =>
+setWithdrawFromDate(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<input
+type="date"
+value={withdrawToDate}
+onChange={(e) =>
+setWithdrawToDate(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+</div>
+
     <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2">
 
       {withdrawRequests
 .filter((item) => {
 
-  const matchSearch =
-    item.email
-      ?.toLowerCase()
-      .includes(
-        searchQuery.toLowerCase()
-      ) ||
-    item.requestId
-      ?.toLowerCase()
-      .includes(
-        searchQuery.toLowerCase()
-      );
+const matchSearch =
+  item.email
+    ?.toLowerCase()
+    .includes(
+      searchWithdraw.toLowerCase()
+    ) ||
 
-  return matchSearch;
+  item.requestId
+    ?.toLowerCase()
+    .includes(
+      searchWithdraw.toLowerCase()
+    );
+const itemDate =
+  new Date(
+    item.createdAt
+  );
+
+const from =
+  withdrawFromDate
+    ? new Date(
+        withdrawFromDate
+      )
+    : null;
+
+const to =
+  withdrawToDate
+    ? new Date(
+        withdrawToDate
+      )
+    : null;
+
+const matchDate =
+  (!from || itemDate >= from) &&
+  (!to || itemDate <= to);
+
+return (
+  matchSearch &&
+  matchDate
+);
 
 })
 .map(
