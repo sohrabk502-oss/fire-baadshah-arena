@@ -3354,6 +3354,9 @@ tournamentTitle:
 selectedResultTournament
 .tournamentTitle,
 
+tournamentId:
+selectedResultTournament.id,
+
 tournamentType:
 selectedResultTournament
 .tournamentType,
@@ -4113,7 +4116,23 @@ MATCH RESULTS
 <div className="grid md:grid-cols-3 gap-8">
 
 {[...matchResults]
+
+.filter((item) =>
+
+joinedPlayers.some(
+(player) =>
+
+player.tournamentId ===
+item.tournamentId &&
+
+player.userEmail ===
+user?.email
+)
+
+)
+
 .reverse()
+
 .map((item) => (
 
 <div
