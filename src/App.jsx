@@ -3471,7 +3471,8 @@ showWallet && user && (
         />
 
         <p className="text-center text-green-400 mt-5 font-bold">
-          919131793234@waaxis
+          8085150673@fam
+          
         </p>
 
         <input
