@@ -2057,44 +2057,9 @@ diff > -7200
 
                 <div className="flex justify-between mb-5">
 
-                  {
-(() => {
-
-  const now =
-    new Date();
-
-  const tournamentTime =
-    new Date(
-     `${item.matchDate}T${item.matchTime}`
-    );
-
-  const diff =
-    (
-      tournamentTime -
-      now
-    ) / 1000 / 60;
-
-  return (
-    diff <= 10 &&
-    diff > -120
-  );
-
-})()
-
-? (
-
 <span className="bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-black">
-  LIVE
+LIVE
 </span>
-
-) : (
-
-<span className="bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-black">
-  LIVE
-</span>
-
-)
-}
                   <span>
                     {
                       item.matchTime
