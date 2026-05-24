@@ -963,22 +963,24 @@ imageUrl,
       );
 // TELEGRAM NOTIFICATION
 
+try {
+
 await fetch(
-  `https://api.telegram.org/bot8992852974:AAGlM5_2VojBzr8gRmQ9H3MYMz5-pffbTN8/sendMessage`,
-  {
-    method: "POST",
+`https://api.telegram.org/bot8992852974:AAGlM5_2VojBzr8gRmQ9H3MYMz5-pffbTN8/sendMessage`,
+{
+method: "POST",
 
-    headers: {
-      "Content-Type":
-        "application/json",
-    },
+headers: {
+"Content-Type":
+"application/json",
+},
 
-    body: JSON.stringify({
+body: JSON.stringify({
 
-      chat_id:
-        "5948674075",
+chat_id:
+"5948674075",
 
-     text:
+text:
 `🔥 NEW PAYMENT REQUEST
 
 👤 User:
@@ -993,9 +995,18 @@ ${utrNumber}
 📞 Support:
 8085150673`,
 
-    }),
-  }
+}),
+}
 );
+
+} catch (err) {
+
+console.log(
+"Telegram Error",
+err
+);
+
+}
       alert(
  "Payment Request Submitted 🔥 Please wait 10 minutes for verification. If not completed, contact WhatsApp support: 8085150673"
 );
@@ -1104,24 +1115,26 @@ const withdrawRequest =
         }
       );
 
-      // TELEGRAM ALERT
+   // TELEGRAM ALERT
 
-      await fetch(
+try {
+
+await fetch(
 `https://api.telegram.org/bot8992852974:AAGlM5_2VojBzr8gRmQ9H3MYMz5-pffbTN8/sendMessage`,
-        {
-          method: "POST",
+{
+method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+headers: {
+"Content-Type":
+"application/json",
+},
 
-          body: JSON.stringify({
+body: JSON.stringify({
 
-            chat_id:
-              "5948674075",
+chat_id:
+"5948674075",
 
-            text:
+text:
 `💸 NEW WITHDRAW REQUEST
 
 👤 User:
@@ -1136,9 +1149,18 @@ ${withdrawUpi}
 📞 Support:
 8085150673`,
 
-          }),
-        }
-      );
+}),
+}
+);
+
+} catch (err) {
+
+console.log(
+"Telegram Error",
+err
+);
+
+}
 
       alert(
         "Withdraw Request Submitted 🔥 Please wait 15 minutes for verification. If not completed, contact WhatsApp support: 8085150673"
@@ -3487,15 +3509,23 @@ showWallet && user && (
           className="w-full mt-6 bg-[#111] rounded-2xl px-5 py-4 outline-none"
         />
 
-        <input
-          type="file"
-          onChange={(e) =>
-            setPaymentScreenshot(
-              e.target.files[0]
-            )
-          }
-          className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
-        />
+        <label className="block w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 cursor-pointer text-gray-400">
+
+UPLOAD PAYMENT SCREENSHOT
+
+<input
+type="file"
+
+onChange={(e) =>
+setPaymentScreenshot(
+e.target.files[0]
+)
+}
+
+className="hidden"
+/>
+
+</label>
 
         <input
           type="number"
