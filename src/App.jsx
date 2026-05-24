@@ -44,6 +44,7 @@ import onevoneImg from "./assets/1v1.png";
 import onevtwoImg from "./assets/1v2.png";
 import threevthreeImg from "./assets/3v3.png";
 import fourvfourImg from "./assets/4v4.png";
+import logo from "./assets/logo.png";
 
 export default function FireBaadshahArena() {
 
@@ -1571,9 +1572,27 @@ showContact,
 
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 flex flex-col md:flex-row gap-5 md:gap-0 items-center justify-between">
 
-          <h1 className="text-4xl font-black text-orange-500">
-            FIRE BAADSHAH ARENA
-          </h1>
+          <div className="flex items-center gap-3">
+
+<img
+src={logo}
+alt="FIRE BAADSHAH ARENA"
+className="w-14 h-14 object-contain"
+/>
+
+<div>
+
+<h1 className="text-2xl font-black leading-none text-orange-500">
+FIRE BAADSHAH
+</h1>
+
+<p className="text-white text-sm font-bold">
+ARENA
+</p>
+
+</div>
+
+</div>
 
           {user ? (
 
