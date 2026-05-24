@@ -3496,11 +3496,22 @@ showWallet && user && (
           ADD COINS
         </h3>
 
-        <img
-          src={paymentQR}
-          alt="QR"
-          className="w-52 mx-auto rounded-3xl border border-orange-500/20"
-        />
+<p className="text-center text-orange-400 font-bold mb-4">
+QR DOWNLOAD KAR KE PAYMENT KARE
+</p>
+
+       <a
+href={paymentQR}
+download="FIRE-BAADSHAH-QR"
+>
+
+<img
+src={paymentQR}
+alt="QR"
+className="w-52 mx-auto rounded-3xl border border-orange-500/20 cursor-pointer"
+/>
+
+</a>
 
         <p className="text-center text-green-400 mt-5 font-bold">
           8085150673@fam
