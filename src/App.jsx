@@ -4119,6 +4119,8 @@ MATCH RESULTS
 
 .filter((item) =>
 
+isAdmin ||
+
 joinedPlayers.some(
 (player) =>
 
