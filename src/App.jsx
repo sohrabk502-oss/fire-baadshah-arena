@@ -1676,6 +1676,10 @@ showContact,
 
         </h1>
 
+        <p className="text-gray-400 text-lg md:text-2xl mt-4 font-semibold">
+India's Free Fire Esports Tournament Platform
+</p>
+
         <p className="text-orange-400 mt-6 text-xl font-bold">
   1 Coin = 1 INR Value Inside Platform
 </p>
