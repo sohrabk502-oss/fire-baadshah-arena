@@ -871,7 +871,7 @@ const selfTopup =
   async () => {
 
     try {
-
+console.log("TOPUP STARTED");
       if (!user) {
 
         alert("Login Required");
@@ -881,12 +881,11 @@ const selfTopup =
       }
 if (
   !topupAmount ||
-  !utrNumber ||
-  !paymentScreenshot
+  !utrNumber
 ) {
 
   alert(
-    "Fill All Payment Details + Screenshot"
+    "Fill All Payment Details"
   );
 
   return;
@@ -914,21 +913,8 @@ if (duplicateUTR) {
   return;
 
 }
-const imageRef =
-storageRef(
-storage,
-`payments/${user.uid}/${Date.now()}`
-);
+console.log(paymentScreenshot);
 
-await uploadBytes(
-imageRef,
-paymentScreenshot
-);
-
-const imageUrl =
-await getDownloadURL(
-imageRef
-);
 
       await push(
         paymentRef,
@@ -943,7 +929,7 @@ imageRef
             utrNumber,
 
            screenshot:
-imageUrl,
+"No Screenshot",
 
           status:
             "PENDING",
@@ -1249,20 +1235,44 @@ return;
 
 }
 
-const imageRef =
-storageRef(
-storage,
-`results/${tournament.id}/${user.uid}`
+const formData =
+new FormData();
+
+formData.append(
+"chat_id",
+"5948674075"
 );
 
-await uploadBytes(
-imageRef,
+formData.append(
+"photo",
 resultScreenshot
 );
 
-const imageUrl =
-await getDownloadURL(
-imageRef
+formData.append(
+"caption",
+
+`🏆 RESULT SUBMISSION
+
+👤 Player:
+${playerData?.name}
+
+🎮 Tournament:
+${tournament.tournamentTitle}
+
+📍 Position:
+#${resultPosition}`
+
+);
+
+await fetch(
+
+`https://api.telegram.org/bot8623121660:AAHxymJn6WWf5wGtASxT0o3xOJE7Lw188OI/sendPhoto`,
+
+{
+method: "POST",
+body: formData,
+}
+
 );
 
 await push(
@@ -1288,7 +1298,7 @@ position:
 resultPosition,
 
 screenshot:
-imageUrl,
+"TELEGRAM",
 
 createdAt:
 new Date()
@@ -2998,12 +3008,12 @@ Position:
 </div>
 
 <a
-href={item.screenshot}
+href="https://t.me/fire_baadshah_result_bot"
 target="_blank"
 rel="noreferrer"
 className="text-blue-400"
 >
-VIEW SCREENSHOT
+VIEW RESULT BOT
 </a>
 
 <div className="flex gap-3">
@@ -3509,35 +3519,51 @@ showWallet && user && (
           className="w-full mt-6 bg-[#111] rounded-2xl px-5 py-4 outline-none"
         />
 
-        <label className="block w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 cursor-pointer text-gray-400">
-
-UPLOAD PAYMENT SCREENSHOT
+     <p className="text-gray-400 mt-4 mb-2">
+PAYMENT SCREENSHOT
+</p>
 
 <input
 type="file"
+accept="image/*"
 
-onChange={(e) =>
-setPaymentScreenshot(
-e.target.files[0]
+onChange={(e) => {
+
+const file =
+e.target.files[0];
+
+setPaymentScreenshot(file);
+
+console.log(file);
+
+}}
+
+className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none"
+/>
+
+{
+paymentScreenshot && (
+
+<p className="text-green-400 mt-2 text-sm">
+
+{paymentScreenshot.name}
+
+</p>
+
 )
 }
 
-className="hidden"
+<input
+type="number"
+placeholder="Coins Amount"
+value={topupAmount}
+onChange={(e) =>
+setTopupAmount(
+e.target.value
+)
+}
+className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
 />
-
-</label>
-
-        <input
-          type="number"
-          placeholder="Coins Amount"
-          value={topupAmount}
-          onChange={(e) =>
-            setTopupAmount(
-              e.target.value
-            )
-          }
-          className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
-        />
 
         <button
           onClick={selfTopup}
@@ -3601,6 +3627,8 @@ className="hidden"
               )
               .map((item) => (
 
+                
+
                 <div
                   key={item.id}
                   className="bg-[#111] rounded-2xl p-4"
@@ -3617,7 +3645,30 @@ className="hidden"
                 </div>
 
               ))}
+{paymentRequests
+  .filter(
+    (item) =>
+      item.userId ===
+      user.uid
+  )
+  .map((item) => (
 
+    <div
+      key={item.id}
+      className="bg-[#111] rounded-2xl p-4 mb-3"
+    >
+
+      <p>
+        🪙 {item.amount} Coins
+      </p>
+
+      <p className="text-orange-400">
+        {item.status}
+      </p>
+
+    </div>
+
+))}
           </div>
 
         </div>
@@ -3807,6 +3858,8 @@ adminPage === "topup" && (
       <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2">
 
         {paymentRequests
+        .slice()
+.reverse()
 .filter((item) => {
 
   const matchSearch =
@@ -3891,11 +3944,15 @@ adminPage === "topup" && (
         }
       );
 
-      await remove(
+      await update(
   ref(
     database,
     `paymentRequests/${item.id}`
-  )
+  ),
+  {
+    status:
+      "COMPLETED",
+  }
 );
 
       alert(
