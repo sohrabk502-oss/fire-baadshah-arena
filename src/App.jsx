@@ -16,6 +16,7 @@ import {
   onValue,
   update,
   remove,
+  get
 } from "firebase/database";
 
 import {
@@ -29,6 +30,7 @@ import {
   onSnapshot,
   updateDoc,
   increment,
+  getDoc,
 } from "firebase/firestore";
 
 import {
@@ -206,6 +208,14 @@ const [manualCoins,
   const [adminPage,
 setAdminPage] =
 useState("topup");
+
+const [searchUid,
+setSearchUid] =
+useState("");
+
+const [searchedUser,
+setSearchedUser] =
+useState(null);
 
 const [
 searchWithdraw,
@@ -786,6 +796,29 @@ await createWallet(
           email,
           password
         );
+       const userDoc =
+await getDoc(
+doc(
+db,
+"users",
+userCredential.user.uid
+)
+);
+
+if (
+userDoc.exists() &&
+userDoc.data().blocked
+) {
+
+alert(
+"Your Account Is Blocked 🚫"
+);
+
+await signOut(auth);
+
+return;
+
+}
 
       setUser(
         userCredential.user
@@ -1337,6 +1370,43 @@ null
 } catch (error) {
 
 alert(error.message);
+
+}
+
+};
+const searchUserProfile =
+async () => {
+
+try {
+
+const userDoc =
+await getDoc(
+doc(
+db,
+"users",
+searchUid
+)
+);
+
+if (
+userDoc.exists()
+) {
+
+setSearchedUser(
+userDoc.data()
+);
+
+} else {
+
+alert(
+"User Not Found ❌"
+);
+
+}
+
+} catch (err) {
+
+console.log(err);
 
 }
 
@@ -3742,6 +3812,129 @@ item.completedTime && (
 </div>
 
 )}
+{isAdmin && (
+
+<section className="max-w-5xl mx-auto px-6 py-10">
+
+<div className="bg-[#111] rounded-[40px] p-10 border border-purple-500/10">
+
+<h2 className="text-4xl font-black text-purple-400 mb-8">
+USER PROFILE CHECK
+</h2>
+
+<input
+type="text"
+placeholder="Enter User UID"
+
+value={searchUid}
+
+onChange={(e) =>
+setSearchUid(
+e.target.value
+)
+}
+
+className="w-full bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<button
+
+onClick={
+searchUserProfile
+}
+
+className="w-full mt-5 bg-purple-500 text-black py-4 rounded-2xl font-black"
+>
+
+SEARCH USER
+
+</button>
+
+{
+searchedUser && (
+
+<div className="bg-black rounded-3xl p-6 mt-8">
+
+<p className="text-orange-400">
+👤 Email:
+{searchedUser.email}
+</p>
+
+<p className="text-blue-400 mt-3 break-all">
+🆔 UID:
+{searchUid}
+</p>
+
+<p className="text-green-400 mt-3">
+🪙 Coins:
+{searchedUser.coins}
+</p>
+
+<p className="text-red-400 mt-3">
+🚫 Status:
+{
+searchedUser.blocked
+? "BLOCKED"
+: "ACTIVE"
+}
+</p>
+
+<button
+
+onClick={async () => {
+
+try {
+
+await updateDoc(
+doc(
+db,
+"users",
+searchUid
+),
+{
+blocked:
+!searchedUser.blocked,
+}
+);
+
+searchUserProfile();
+
+alert(
+searchedUser.blocked
+? "User Unblocked 🔥"
+: "User Blocked 🚫"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="w-full mt-6 bg-red-500 text-white py-4 rounded-2xl font-black"
+>
+
+{
+searchedUser.blocked
+? "UNBLOCK USER"
+: "BLOCK USER"
+}
+
+</button>
+
+</div>
+
+)
+}
+
+</div>
+
+</section>
+
+)}
+
 {/* MANUAL COINS SYSTEM */}
 
 {isAdmin && (
