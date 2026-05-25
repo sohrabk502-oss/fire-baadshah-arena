@@ -4120,16 +4120,144 @@ VIEW RESULT BOT
 <div className="flex gap-3">
 
 <button
-onClick={() =>
-setMatchRanks({
-...matchRanks,
+onClick={async () => {
 
-[item.userId]: {
-position:
-item.position,
-},
-})
+try {
+
+const playerRef =
+ref(
+database,
+`users/${item.userId}`
+);
+
+const playerSnap =
+await get(playerRef);
+
+const playerData =
+playerSnap.val();
+
+const currentWins =
+playerData?.wins || 0;
+
+const currentTop3 =
+playerData?.top3 || 0;
+
+const duplicatePosition =
+Object.values(
+matchRanks
+).find(
+(rank) =>
+
+Number(rank.position) ===
+Number(item.position)
+);
+
+if (duplicatePosition) {
+
+alert(
+"This Position Already Approved ❌"
+);
+
+return;
+
 }
+
+let winCoins = 0;
+
+if (
+Number(item.position) === 1
+) {
+
+winCoins =
+Number(
+selectedResultTournament.top1
+);
+
+}
+
+else if (
+Number(item.position) === 2
+) {
+
+winCoins =
+Number(
+selectedResultTournament.top2
+);
+
+}
+
+else if (
+Number(item.position) === 3
+) {
+
+winCoins =
+Number(
+selectedResultTournament.top3
+);
+
+}
+
+else if (
+
+Number(item.position) <=
+Math.floor(
+Number(
+selectedResultTournament.totalTeams
+) * 0.42
+)
+
+) {
+
+winCoins =
+Number(
+selectedResultTournament.perPlayerPrize
+);
+
+}
+
+await update(
+playerRef,
+{
+
+pendingCoins:
+winCoins,
+
+lastPosition:
+Number(item.position),
+
+wins:
+
+Number(item.position) === 1
+
+? currentWins + 1
+
+: currentWins,
+
+top3:
+
+Number(item.position) <= 3
+
+? currentTop3 + 1
+
+: currentTop3,
+
+approved: true,
+
+}
+
+);
+
+alert(
+"Result Approved 🔥"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
 className="bg-green-500 text-black px-4 py-2 rounded-xl font-black"
 >
 APPROVE
