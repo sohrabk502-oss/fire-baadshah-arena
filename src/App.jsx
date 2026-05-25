@@ -3148,6 +3148,7 @@ item.tournamentType ===
   }}
  className="w-full mt-6 bg-orange-500 text-black py-3 md:py-4 rounded-2xl font-black text-sm md:text-base"
 >
+  
   JOIN TOURNAMENT
 </button>
 
@@ -3496,7 +3497,7 @@ PUBLISH ROOM DETAILS
 )
 }
 {
-isAdmin ? (
+isAdmin && (
 
 <button
 onClick={async () => {
@@ -3512,6 +3513,44 @@ item.id
 );
 
 for (const player of winners) {
+  let winCoins = 0;
+
+if (Number(player.position) === 1) {
+
+winCoins =
+Number(item.top1 || 0);
+
+}
+
+else if (Number(player.position) === 2) {
+
+winCoins =
+Number(item.top2 || 0);
+
+}
+
+else if (Number(player.position) === 3) {
+
+winCoins =
+Number(item.top3 || 0);
+
+}
+
+else if (
+
+Number(player.position) <=
+Math.floor(
+Number(item.totalTeams || 0) * 0.42
+)
+
+) {
+
+winCoins =
+Number(
+item.perPlayerPrize || 0
+);
+
+}
 
 const playerRef =
 ref(
@@ -3539,7 +3578,7 @@ Number(
 playerData?.pendingCoins || 0
 ),
 
-pendingCoins: 0,
+pendingCoins: winCoins,
 
 }
 
@@ -3587,24 +3626,15 @@ alert(error.message);
 }
 
 }}
+
 className="w-full mt-6 bg-purple-500 text-black py-4 rounded-2xl font-black"
 >
 PUBLISH RESULT
 </button>
 
-) : (
-
-<button
-onClick={() =>
-setSelectedResultTournament(item)
-}
-className="w-full mt-4 bg-green-500 text-black py-4 rounded-2xl font-black"
->
-SUBMIT RESULT
-</button>
-
 )
 }
+
                 </div>
 
               </div>
@@ -4259,30 +4289,37 @@ e.target.value,
 className="w-full mt-4 bg-black rounded-2xl px-4 py-4 outline-none"
 />
 
+<p className="text-white mb-4">
+Total Slots:
+{selectedTournament?.totalTeams || 4}
+</p>
+
 <h4 className="text-2xl font-black mt-8 mb-5 text-orange-400">
 SELECT SLOT
 </h4>
 
-<div className="grid grid-cols-4 gap-3">
+
+
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
 
 {Array.from({
 length: Number(
-selectedTournament.totalTeams
+selectedTournament?.totalTeams || 4
 ),
 }).map((_, index) => {
 
-const slot =
-index + 1;
+const slot = index + 1;
 
 const bookedPlayer =
 joinedPlayers.find(
 (player) =>
+
 player.tournamentId ===
-selectedTournament.id &&
+selectedTournament?.id &&
 
 Number(
 player.selectedSlot
-) === slot
+) === Number(slot)
 );
 
 return (
@@ -4302,16 +4339,15 @@ setJoinData({
 selectedTournament.id
 ],
 
-selectedSlot:
-slot,
+selectedSlot: slot,
 },
 })
 }
 
-className={`p-4 rounded-2xl font-black text-sm ${
+className={`h-16 rounded-2xl font-black text-sm border ${
 bookedPlayer
 
-? "bg-red-500/20 text-red-400"
+? "bg-red-500 text-white border-red-500"
 
 : joinData[
 selectedTournament.id
@@ -4319,15 +4355,15 @@ selectedTournament.id
 
 ? "bg-orange-500 text-black"
 
-: "bg-black border border-orange-500/20"
+: "bg-[#111] text-white border-orange-500/20"
 }`}
 >
 
-{bookedPlayer
-
-? bookedPlayer.ingameName
-
-: `Slot ${slot}`}
+{
+bookedPlayer
+? `BOOKED ${slot}`
+: `SLOT ${slot}`
+}
 
 </button>
 
@@ -4367,7 +4403,13 @@ selectedResultTournament && (
 <div>
 
 <h2 className="text-4xl font-black text-purple-400">
-PUBLISH MATCH RESULT
+
+{
+isAdmin
+? "PUBLISH MATCH RESULT"
+: "UPLOAD MATCH RESULT"
+}
+
 </h2>
 
 {
@@ -4665,9 +4707,126 @@ selectedResultTournament
 .tournamentTitle
 }
 </h3>
+
+{
+isAdmin && (
+
+<div className="bg-black rounded-2xl p-5 mb-8 border border-green-500/10">
+
+<h3 className="text-2xl font-black text-green-400 mb-6">
+PLAYER RESULT SUBMISSIONS
+</h3>
+
+<div className="space-y-4">
+
+{
+playerResults
+.filter(
+(item) =>
+item.tournamentId ===
+selectedResultTournament.id
+)
+.map((item) => (
+
+<div
+key={item.id}
+className="bg-[#111] rounded-2xl p-4 border border-purple-500/10"
+>
+
+<div className="flex items-center justify-between gap-4 flex-wrap">
+
+<div>
+
+<p className="text-orange-400 font-black">
+{item.playerName}
+</p>
+
+<p className="text-gray-400 text-sm">
+Position:
+#{item.position}
+</p>
+
+</div>
+
+<a
+href="https://t.me/fire_baadshah_result_bot"
+target="_blank"
+rel="noreferrer"
+className="text-blue-400"
+>
+VIEW RESULT BOT
+</a>
+
+<div className="flex gap-3">
+
+<button
+onClick={async () => {
+
+try {
+
+await update(
+ref(
+database,
+`playerResults/${item.id}`
+),
+{
+approved: true,
+approvedPosition:
+Number(item.position),
+}
+);
+
+alert(
+"Result Approved 🔥"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+className="bg-green-500 text-black px-4 py-2 rounded-xl font-black"
+>
+APPROVE
+</button>
+
+<button
+onClick={async () => {
+
+await remove(
+ref(
+database,
+`playerResults/${item.id}`
+)
+);
+
+}}
+className="bg-red-500 text-white px-4 py-2 rounded-xl font-black"
+>
+REJECT
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+))
+}
+
+</div>
+
+</div>
+
+)
+}
 <div className="bg-black rounded-2xl p-5 mb-5 border border-purple-500/10">
 
 <p className="text-purple-400 font-black mb-3">
+
 RESULT FORMAT
 </p>
 
@@ -4853,7 +5012,8 @@ e.target.files[0]
 
 className="w-full mt-4 bg-black rounded-2xl px-5 py-4 outline-none"
 />
-
+{
+isAdmin && (
 <button
 onClick={async () => {
 
@@ -5016,11 +5176,14 @@ alert(error.message);
 }
 
 }}
+
 className="w-full mt-8 bg-purple-500 text-black py-3 md:py-4 rounded-2xl font-black text-sm md:text-base"
 >
 PUBLISH RESULT
 </button>
 
+)
+}
 </div>
 
 </div>
