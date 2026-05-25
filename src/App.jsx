@@ -26,6 +26,10 @@ import {
 } from "firebase/storage";
 
 import {
+getToken
+} from "firebase/messaging";
+
+import {
   doc,
   onSnapshot,
   updateDoc,
@@ -35,8 +39,10 @@ import {
 
 import {
   db,
-  storage
+  storage,
+  messaging
 } from "./firebase";
+
 import { createWallet } from "./services/walletService";
 import paymentQR from "./assets/paymentQR.png";
 import soloImg from "./assets/solo.png";
@@ -47,6 +53,7 @@ import onevtwoImg from "./assets/1v2.png";
 import threevthreeImg from "./assets/3v3.png";
 import fourvfourImg from "./assets/4v4.png";
 import logo from "./assets/logo.png";
+import notificationSound from "./assets/notification.mp3";
 
 export default function FireBaadshahArena() {
 
@@ -242,6 +249,10 @@ const [showContact, setShowContact] =
   setShowProfile] =
   useState(false);
 
+  const [showNotifications,
+setShowNotifications] =
+useState(false);
+
 const [joinedHistory,
   setJoinedHistory] =
   useState([]);
@@ -269,6 +280,96 @@ const [joinedPlayers,
 setPlayerResults] =
 useState([]);
 
+const [leaderboard,
+setLeaderboard] =
+useState([]);
+
+const [analytics,
+setAnalytics] =
+useState({
+
+totalUsers: 0,
+
+totalTournaments: 0,
+
+totalDeposits: 0,
+
+totalWithdrawals: 0,
+
+liveMatches: 0,
+
+pendingTopups: 0,
+
+pendingWithdraws: 0,
+
+adminRevenue: 0,
+
+});
+
+const [maintenanceMode,
+setMaintenanceMode] =
+useState(false);
+
+const userMatchesPlayed =
+joinedHistory.filter(
+(item) =>
+item.userEmail ===
+user?.email
+).length;
+
+const userWins =
+playerData?.wins || 0;
+
+const userTop3 =
+playerData?.top3 || 0;
+
+const userWinRate =
+userMatchesPlayed > 0
+
+? (
+(userWins /
+userMatchesPlayed) *
+100
+).toFixed(1)
+
+: 0;
+
+const userTotalEarnings =
+(userWins * 500) +
+(userTop3 * 100);
+
+const userTotalCoinsWon =
+userTotalEarnings;
+
+const userAvgPlacement =
+
+userMatchesPlayed > 0
+
+? (
+(
+(userWins * 1) +
+(userTop3 * 3)
+) /
+userMatchesPlayed
+).toFixed(1)
+
+: 0;
+
+const userKD =
+(
+(
+userWins * 3 +
+userTop3
+) /
+
+(userMatchesPlayed || 1)
+).toFixed(2);
+
+const userMVP =
+Math.floor(
+userWins / 2
+);
+
 const [matchRanks,
 setMatchRanks] =
 useState({});
@@ -284,6 +385,23 @@ useState("");
 const [roomPassword,
 setRoomPassword] =
 useState("");
+
+const [notifications,
+setNotifications] =
+useState([]);
+
+const playNotificationSound = () => {
+
+const audio =
+new Audio(
+notificationSound
+);
+
+audio.volume = 1.0;
+
+audio.play();
+
+};
 
 const [selectedResultTournament,
   setSelectedResultTournament] =
@@ -392,6 +510,93 @@ const remainingPlayers =
 
   }, [entryFee, totalTeams]);
 
+  // ================= PUSH NOTIFICATIONS =================
+
+useEffect(() => {
+
+const requestPermission =
+async () => {
+
+try {
+
+const permission =
+await Notification.requestPermission();
+
+if (
+!("serviceWorker" in navigator)
+) {
+return;
+}
+
+if (
+permission ===
+"granted"
+) {
+
+await navigator.serviceWorker.register(
+"/firebase-messaging-sw.js"
+);
+
+const registration =
+await navigator.serviceWorker.ready;
+
+console.log(
+"SERVICE WORKER READY"
+);
+
+const token =
+await getToken(
+messaging,
+{
+vapidKey:
+"BCAjW1ZCBKvhXkLPxe5imNSAptbkHEnrGHHISW2RUDj33RJj9JnLVgF7SjEHbKUgCObuZ6OicaSE9JMPyIJz944",
+
+serviceWorkerRegistration:
+registration,
+}
+);
+
+console.log(
+"PUSH TOKEN:",
+token
+);
+
+if (
+token &&
+user
+) {
+
+await update(
+ref(
+database,
+`users/${user.uid}`
+),
+{
+pushToken:
+token,
+}
+);
+
+}
+
+}
+
+} catch (err) {
+
+console.log(err);
+
+}
+
+};
+
+setTimeout(() => {
+
+// requestPermission();
+
+}, 3000);
+
+}, [user]);
+
   // ================= AUTH STATE =================
 
   useEffect(() => {
@@ -426,6 +631,283 @@ const remainingPlayers =
     return () => unsubscribe();
 
 }, []);
+
+// ================= MAINTENANCE MODE =================
+
+useEffect(() => {
+
+const maintenanceRef =
+ref(
+database,
+"settings/maintenance"
+);
+
+onValue(
+maintenanceRef,
+(snapshot) => {
+
+setMaintenanceMode(
+snapshot.val() || false
+);
+
+}
+);
+
+}, []);
+
+// ================= ADMIN ANALYTICS =================
+
+useEffect(() => {
+
+const usersRef =
+ref(
+database,
+"users"
+);
+
+const tournamentsRef =
+ref(
+database,
+"liveTournaments"
+);
+
+onValue(
+usersRef,
+(usersSnap) => {
+
+const usersData =
+usersSnap.val();
+
+const totalUsers =
+usersData
+
+? Object.keys(
+usersData
+).length
+
+: 0;
+
+onValue(
+tournamentsRef,
+(tournamentSnap) => {
+
+const tournamentData =
+tournamentSnap.val();
+
+const tournaments =
+tournamentData
+
+? Object.values(
+tournamentData
+)
+
+: [];
+
+const totalTournaments =
+tournaments.length;
+
+const liveMatches =
+tournaments.filter(
+(item) => {
+
+  if (
+!item.matchDate ||
+!item.matchTime
+) {
+return false;
+}
+
+const now =
+new Date();
+
+if (
+!item.matchDate ||
+!item.matchTime
+) {
+return false;
+}
+
+const tournamentTime =
+new Date(
+`${item.matchDate}T${item.matchTime}`
+);
+
+const diff =
+(
+tournamentTime -
+now
+) /
+1000 /
+60;
+
+return (
+diff <= 10 &&
+diff > -7200
+);
+
+}
+).length;
+
+const adminRevenue =
+tournaments.reduce(
+(total, item) =>
+
+total +
+Number(
+item.adminProfit || 0
+),
+
+0
+);
+
+const totalDeposits =
+paymentRequests
+
+.filter(
+(item) =>
+item.status ===
+"APPROVED"
+)
+
+.reduce(
+(total, item) =>
+
+total +
+Number(
+item.amount || 0
+),
+
+0
+);
+
+const totalWithdrawals =
+withdrawRequests
+
+.filter(
+(item) =>
+item.status ===
+"APPROVED"
+)
+
+.reduce(
+(total, item) =>
+
+total +
+Number(
+item.amount || 0
+),
+
+0
+);
+
+const pendingTopups =
+paymentRequests.filter(
+(item) =>
+item.status ===
+"PENDING"
+).length;
+
+const pendingWithdraws =
+withdrawRequests.filter(
+(item) =>
+item.status ===
+"PENDING"
+).length;
+
+setAnalytics({
+
+totalUsers,
+
+totalTournaments,
+
+totalDeposits,
+
+totalWithdrawals,
+
+liveMatches,
+
+pendingTopups,
+
+pendingWithdraws,
+
+adminRevenue:
+adminRevenue.toFixed(0),
+
+});
+
+}
+);
+
+}
+);
+
+}, [
+paymentRequests,
+withdrawRequests
+]);
+
+// ================= LEADERBOARD =================
+
+useEffect(() => {
+
+const usersRef =
+ref(
+database,
+"users"
+);
+
+onValue(
+usersRef,
+(snapshot) => {
+
+const data =
+snapshot.val();
+
+if (data) {
+
+const loadedData =
+Object.keys(data).map(
+(key) => ({
+id: key,
+...data[key],
+})
+);
+
+const sorted =
+loadedData.sort(
+(a, b) => {
+
+if (
+(b.wins || 0) !==
+(a.wins || 0)
+) {
+
+return (
+(b.wins || 0) -
+(a.wins || 0)
+);
+
+}
+
+return (
+(b.top3 || 0) -
+(a.top3 || 0)
+);
+
+}
+);
+
+setLeaderboard(
+sorted
+);
+
+}
+
+}
+);
+
+}, []);
+
 // ================= WALLET =================
 
 useEffect(() => {
@@ -699,6 +1181,69 @@ setMatchResults([]);
 
 }, []);
 
+// ================= FETCH NOTIFICATIONS =================
+
+useEffect(() => {
+
+if (!user) return;
+
+const notifRef =
+ref(
+database,
+`notifications/${user.uid}`
+);
+
+onValue(
+notifRef,
+(snapshot) => {
+
+const data =
+snapshot.val();
+
+if (data) {
+
+const loadedData =
+Object.keys(data).map(
+(key) => ({
+id: key,
+...data[key],
+})
+);
+
+setNotifications(
+loadedData.reverse()
+);
+playNotificationSound();
+
+const latest =
+loadedData[0];
+
+if (
+Notification.permission ===
+"granted"
+) {
+
+new Notification(
+latest.title,
+{
+body:
+latest.message,
+}
+);
+
+}
+
+} else {
+
+setNotifications([]);
+
+}
+
+}
+);
+
+}, [user]);
+
 useEffect(() => {
 
 const resultsRef =
@@ -715,6 +1260,15 @@ const data =
 snapshot.val();
 
 if (data) {
+
+  if (
+Notification.permission !==
+"granted"
+) {
+
+Notification.requestPermission();
+
+}
 
 const loadedData =
 Object.keys(data).map(
@@ -1702,6 +2256,37 @@ showHistory,
 showJoinPopup,
 showContact,
 ]);
+if (
+maintenanceMode &&
+!isAdmin
+) {
+
+return (
+
+<div className="bg-black min-h-screen flex items-center justify-center px-6">
+
+<div className="text-center">
+
+<h1 className="text-6xl font-black text-orange-500">
+🚧
+</h1>
+
+<h2 className="text-5xl font-black text-white mt-6">
+SERVER UNDER
+MAINTENANCE
+</h2>
+
+<p className="text-gray-400 mt-6 text-xl">
+Please come back later.
+</p>
+
+</div>
+
+</div>
+
+);
+
+}
   return (
    <div className="bg-black min-h-screen text-white overflow-x-hidden">
 
@@ -1769,6 +2354,33 @@ ARENA
 >
   PROFILE
 </button>
+
+<div className="relative">
+
+<button
+
+onClick={() =>
+setShowNotifications(
+true
+)
+}
+
+className="bg-yellow-500/20 text-yellow-400 px-5 py-2 rounded-2xl font-black"
+>
+
+🔔
+
+{
+notifications.filter(
+(item) =>
+!item.seen
+).length
+}
+
+</button>
+
+</div>
+
               {isAdmin && (
                 <span className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full font-bold">
                   ADMIN
@@ -1819,6 +2431,173 @@ ARENA
         </div>
 
       </nav>
+
+{/* NOTIFICATIONS */}
+
+{
+notifications.length > 0 && (
+
+<div className="fixed top-24 right-4 z-50 space-y-3">
+
+{notifications
+.slice(0, 3)
+.map((item) => (
+
+<div
+key={item.id}
+onClick={async () => {
+
+await update(
+ref(
+database,
+`notifications/${user.uid}/${item.id}`
+),
+{
+seen: true,
+}
+);
+
+}}
+
+
+className="bg-[#111] border border-yellow-500/20 rounded-2xl p-4 w-80 shadow-xl"
+>
+
+<h3 className="text-yellow-400 font-black">
+{item.title}
+</h3>
+
+<p className="text-gray-300 text-sm mt-2">
+{item.message}
+</p>
+
+<p className="text-gray-500 text-xs mt-2">
+{item.time}
+</p>
+
+</div>
+
+))}
+
+</div>
+
+)
+}
+
+{/* NOTIFICATION HISTORY */}
+
+{
+showNotifications && (
+
+<div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 px-4">
+
+<div className="bg-[#111] w-full max-w-3xl rounded-[40px] p-5 md:p-8 border border-yellow-500/20 max-h-[90vh] overflow-y-auto">
+
+<div className="flex items-center justify-between mb-8">
+
+<h2 className="text-4xl font-black text-yellow-400">
+NOTIFICATIONS
+</h2>
+
+<button
+onClick={() =>
+setShowNotifications(
+false
+)
+}
+className="bg-red-500 px-5 py-2 rounded-2xl font-black"
+>
+CLOSE
+</button>
+
+</div>
+
+<div className="space-y-4">
+
+{
+notifications.length > 0 ? (
+
+notifications.map((item) => (
+
+<div
+
+key={item.id}
+
+onClick={async () => {
+
+await update(
+ref(
+database,
+`notifications/${user.uid}/${item.id}`
+),
+{
+seen: true,
+}
+);
+
+}}
+
+className={`rounded-3xl p-5 border cursor-pointer duration-300 ${
+item.seen
+
+? "bg-black border-gray-700"
+
+: "bg-yellow-500/10 border-yellow-500/20"
+}`}
+
+>
+
+<div className="flex items-center justify-between">
+
+<h3 className="text-xl font-black text-yellow-400">
+{item.title}
+</h3>
+
+{
+!item.seen && (
+
+<span className="bg-red-500 text-white text-xs px-3 py-1 rounded-full">
+NEW
+</span>
+
+)
+}
+
+</div>
+
+<p className="text-gray-300 mt-3">
+{item.message}
+</p>
+
+<p className="text-gray-500 text-sm mt-4">
+{item.time}
+</p>
+
+</div>
+
+))
+
+) : (
+
+<div className="text-center py-20">
+
+<h3 className="text-3xl font-black text-gray-500">
+NO NOTIFICATIONS
+</h3>
+
+</div>
+
+)
+}
+
+</div>
+
+</div>
+
+</div>
+
+)
+}
 
       {/* HERO */}
 
@@ -1918,7 +2697,7 @@ India's Free Fire Esports Tournament Platform
 ].map((mode) => (
 
       <button
-        key={mode}
+        key={mode.name}
        onClick={() =>
   setSelectedMode(
     mode.name
@@ -1977,11 +2756,7 @@ India's Free Fire Esports Tournament Platform
             tournamentTime -
             now
           ) / 1000 / 60;
-console.log(
-  item.tournamentType,
-  selectedMode,
-  diff
-);
+
 
 return (
   diff > 10 &&
@@ -2434,6 +3209,7 @@ className="w-full bg-[#111] rounded-2xl px-4 py-3 outline-none"
 />
 
 <button
+
 onClick={async () => {
 
 try {
@@ -2449,8 +3225,41 @@ roomPassword,
 }
 );
 
+// JOINED USERS FETCH
+const joinedUsers =
+joinedPlayers.filter(
+(player) =>
+player.tournamentId ===
+item.id
+);
+
+// WEBSITE NOTIFICATION
+for (const player of joinedUsers) {
+
+await push(
+ref(
+database,
+`notifications/${player.userId}`
+),
+{
+title:
+"ROOM DETAILS AVAILABLE 🔥",
+
+message:
+`Room ID: ${roomId} | Password: ${roomPassword}`,
+
+time:
+new Date().toLocaleString(),
+
+seen: false,
+}
+);
+
+}
+
+// OPTIONAL POPUP
 alert(
-"Room Details Published 🔥"
+"Room Details Published & Notifications Sent 🔥"
 );
 
 } catch (error) {
@@ -2474,6 +3283,7 @@ isAdmin && (
 
 
 <button
+
 onClick={() =>
 setSelectedResultTournament(
 item
@@ -2515,6 +3325,121 @@ UPLOAD RESULT
         </div>
 
       </section>
+
+      {/* WINNER LEADERBOARD */}
+
+<section className="max-w-7xl mx-auto px-6 py-20">
+
+<h2 className="text-5xl font-black text-yellow-400 mb-12">
+🏆 WINNER LEADERBOARD
+</h2>
+
+<div className="grid md:grid-cols-3 gap-8">
+
+{
+leaderboard
+.slice(0, 15)
+.map((player, index) => (
+
+<div
+key={player.id}
+className={`rounded-[35px] p-8 border ${
+index === 0
+
+? "bg-yellow-500/10 border-yellow-500/20"
+
+: index === 1
+
+? "bg-gray-500/10 border-gray-500/20"
+
+: index === 2
+
+? "bg-orange-500/10 border-orange-500/20"
+
+: "bg-[#111] border-purple-500/10"
+}`}
+>
+
+<div className="flex items-center justify-between mb-6">
+
+<h3 className="text-3xl font-black text-white">
+#{index + 1}
+</h3>
+
+<span className="text-4xl">
+
+{
+index === 0
+? "🥇"
+
+: index === 1
+? "🥈"
+
+: index === 2
+? "🥉"
+
+: "🔥"
+}
+
+</span>
+
+</div>
+
+<h2 className="text-2xl font-black text-orange-400">
+
+{player.name || "Unknown"}
+
+</h2>
+
+<div className="space-y-4 mt-8">
+
+<div className="flex justify-between">
+
+<span className="text-gray-400">
+Wins
+</span>
+
+<span className="text-yellow-400 font-black">
+🏆 {player.wins || 0}
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span className="text-gray-400">
+Top 3
+</span>
+
+<span className="text-green-400 font-black">
+🔥 {player.top3 || 0}
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span className="text-gray-400">
+Coins
+</span>
+
+<span className="text-orange-400 font-black">
+🪙 {player.coins || 0}
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+))
+}
+
+</div>
+
+</section>
+
       {/* HISTORY POPUP */}
 
 {
@@ -2542,6 +3467,106 @@ showHistory && user && (
     </div>
 
     <div className="space-y-6">
+
+<div className="grid md:grid-cols-4 gap-4 mb-8">
+
+<div className="bg-black rounded-3xl p-5 border border-orange-500/10">
+
+<p className="text-gray-400">
+Matches Played
+</p>
+
+<h3 className="text-4xl font-black text-orange-500 mt-3">
+🎮 {userMatchesPlayed}
+</h3>
+
+</div>
+
+<div className="bg-black rounded-3xl p-5 border border-yellow-500/10">
+
+<p className="text-gray-400">
+Wins
+</p>
+
+<h3 className="text-4xl font-black text-yellow-400 mt-3">
+🏆 {userWins}
+</h3>
+
+</div>
+
+<div className="bg-black rounded-3xl p-5 border border-green-500/10">
+
+<p className="text-gray-400">
+Win Rate
+</p>
+
+<h3 className="text-4xl font-black text-green-400 mt-3">
+🔥 {userWinRate}%
+</h3>
+
+</div>
+
+<div className="bg-black rounded-3xl p-5 border border-blue-500/10">
+
+<p className="text-gray-400">
+Total Earnings
+</p>
+
+<h3 className="text-4xl font-black text-blue-400 mt-3">
+🪙 {userTotalEarnings}
+</h3>
+
+</div>
+
+<div className="bg-black rounded-3xl p-5 border border-purple-500/10">
+
+<p className="text-gray-400">
+Total Coins Won
+</p>
+
+<h3 className="text-4xl font-black text-purple-400 mt-3">
+💰 {userTotalCoinsWon}
+</h3>
+
+</div>
+
+<div className="bg-black rounded-3xl p-5 border border-pink-500/10">
+
+<p className="text-gray-400">
+Avg Placement
+</p>
+
+<h3 className="text-4xl font-black text-pink-400 mt-3">
+📍 #{userAvgPlacement}
+</h3>
+
+</div>
+
+<div className="bg-black rounded-3xl p-5 border border-red-500/10">
+
+<p className="text-gray-400">
+K/D Stats
+</p>
+
+<h3 className="text-4xl font-black text-red-400 mt-3">
+⚔️ {userKD}
+</h3>
+
+</div>
+
+<div className="bg-black rounded-3xl p-5 border border-cyan-500/10">
+
+<p className="text-gray-400">
+MVP Count
+</p>
+
+<h3 className="text-4xl font-black text-cyan-400 mt-3">
+👑 {userMVP}
+</h3>
+
+</div>
+
+</div>
 
     {[...joinedHistory]
 .filter(
@@ -3934,6 +4959,193 @@ searchedUser.blocked
 </section>
 
 )}
+{/* MAINTENANCE MODE */}
+
+{
+isAdmin && (
+
+<section className="max-w-5xl mx-auto px-6 py-10">
+
+<div className="bg-[#111] rounded-[40px] p-8 border border-red-500/10">
+
+<div className="flex items-center justify-between flex-wrap gap-5">
+
+<div>
+
+<h2 className="text-4xl font-black text-red-400">
+🚧 MAINTENANCE MODE
+</h2>
+
+<p className="text-gray-400 mt-3">
+Enable or disable server maintenance mode
+</p>
+
+</div>
+
+<button
+
+onClick={async () => {
+
+await update(
+ref(
+database,
+"settings"
+),
+{
+maintenance:
+!maintenanceMode
+}
+);
+
+}}
+
+className={`px-8 py-4 rounded-2xl font-black text-lg ${
+maintenanceMode
+
+? "bg-red-500 text-white"
+
+: "bg-green-500 text-black"
+}`}
+
+>
+
+{
+maintenanceMode
+
+? "DISABLE"
+
+: "ENABLE"
+}
+
+MAINTENANCE
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+)
+}
+
+{/* ADMIN ANALYTICS */}
+
+{
+isAdmin && (
+
+<section className="max-w-7xl mx-auto px-6 py-10">
+
+<h2 className="text-5xl font-black text-orange-500 mb-10">
+📊 ADMIN ANALYTICS
+</h2>
+
+<div className="grid md:grid-cols-4 gap-6">
+
+<div className="bg-[#111] rounded-3xl p-6 border border-orange-500/10">
+
+<p className="text-gray-400">
+Total Users
+</p>
+
+<h3 className="text-5xl font-black text-orange-500 mt-4">
+👥 {analytics.totalUsers}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-green-500/10">
+
+<p className="text-gray-400">
+Total Tournaments
+</p>
+
+<h3 className="text-5xl font-black text-green-400 mt-4">
+🎮 {analytics.totalTournaments}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-blue-500/10">
+
+<p className="text-gray-400">
+Total Deposits
+</p>
+
+<h3 className="text-5xl font-black text-blue-400 mt-4">
+🪙 {analytics.totalDeposits}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-red-500/10">
+
+<p className="text-gray-400">
+Total Withdrawals
+</p>
+
+<h3 className="text-5xl font-black text-red-400 mt-4">
+💸 {analytics.totalWithdrawals}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-yellow-500/10">
+
+<p className="text-gray-400">
+Live Matches
+</p>
+
+<h3 className="text-5xl font-black text-yellow-400 mt-4">
+🔥 {analytics.liveMatches}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-cyan-500/10">
+
+<p className="text-gray-400">
+Pending Topups
+</p>
+
+<h3 className="text-5xl font-black text-cyan-400 mt-4">
+⏳ {analytics.pendingTopups}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-pink-500/10">
+
+<p className="text-gray-400">
+Pending Withdraws
+</p>
+
+<h3 className="text-5xl font-black text-pink-400 mt-4">
+🏦 {analytics.pendingWithdraws}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-purple-500/10">
+
+<p className="text-gray-400">
+Admin Revenue
+</p>
+
+<h3 className="text-5xl font-black text-purple-400 mt-4">
+💰 {analytics.adminRevenue}
+</h3>
+
+</div>
+
+</div>
+
+</section>
+
+)
+}
+
 
 {/* MANUAL COINS SYSTEM */}
 
