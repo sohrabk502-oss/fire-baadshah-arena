@@ -3612,6 +3612,7 @@ database,
 ),
 {
 resultPublished: true,
+completed: true,
 }
 );
 
