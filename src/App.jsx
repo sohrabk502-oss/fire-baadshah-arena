@@ -288,6 +288,8 @@ const [analytics,
 setAnalytics] =
 useState({
 
+  
+
 totalUsers: 0,
 
 totalTournaments: 0,
@@ -303,6 +305,28 @@ pendingTopups: 0,
 pendingWithdraws: 0,
 
 adminRevenue: 0,
+
+});
+
+const [resultAnalytics,
+setResultAnalytics] =
+useState({
+
+totalSubmitted: 0,
+
+totalApproved: 0,
+
+totalRejected: 0,
+
+pendingResults: 0,
+
+totalPrizeDistributed: 0,
+
+top1Player: "",
+
+top2Player: "",
+
+top3Player: "",
 
 });
 
@@ -1213,6 +1237,17 @@ id: key,
 setNotifications(
 loadedData.reverse()
 );
+const unseenNotifications =
+loadedData.filter(
+(item) => !item.seen
+);
+
+if (
+unseenNotifications.length === 0
+) {
+return;
+}
+
 playNotificationSound();
 
 const latest =
@@ -1281,6 +1316,81 @@ id: key,
 setPlayerResults(
 loadedData
 );
+const approved =
+loadedData.filter(
+(item) =>
+item.approved === true
+);
+
+const pending =
+loadedData.filter(
+(item) =>
+!item.approved
+);
+
+const top1 =
+approved.find(
+(item) =>
+Number(
+item.approvedPosition
+) === 1
+);
+
+const top2 =
+approved.find(
+(item) =>
+Number(
+item.approvedPosition
+) === 2
+);
+
+const top3 =
+approved.find(
+(item) =>
+Number(
+item.approvedPosition
+) === 3
+);
+
+const totalPrize =
+approved.reduce(
+(total, item) =>
+
+total +
+Number(
+item.winCoins || 0
+),
+
+0
+);
+
+setResultAnalytics({
+
+totalSubmitted:
+loadedData.length,
+
+totalApproved:
+approved.length,
+
+totalRejected:
+0,
+
+pendingResults:
+pending.length,
+
+totalPrizeDistributed:
+totalPrize,
+
+top1Player:
+top1?.playerName || "",
+
+top2Player:
+top2?.playerName || "",
+
+top3Player:
+top3?.playerName || "",
+
+});
 
 } else {
 
@@ -2162,6 +2272,7 @@ customPrize,
             roomId: "",
             roomPassword: "",
 
+resultPublished: false,
 
           }
         );
@@ -2435,7 +2546,9 @@ notifications.filter(
 {/* NOTIFICATIONS */}
 
 {
-notifications.length > 0 && (
+notifications.filter(
+(item) => !item.seen
+).length > 0 && (
 
 <div className="fixed top-24 right-4 z-50 space-y-3">
 
@@ -2651,7 +2764,111 @@ India's Free Fire Esports Tournament Platform
   </div>
 
 </div>
+
       </section>
+
+      {
+isAdmin && (
+
+<section className="max-w-7xl mx-auto px-6 py-10">
+
+<h2 className="text-5xl font-black text-red-400 mb-10">
+📊 RESULT ANALYTICS
+</h2>
+
+<div className="grid md:grid-cols-4 gap-6">
+
+<div className="bg-[#111] rounded-3xl p-6 border border-orange-500/10">
+
+<p className="text-gray-400">
+Total Submitted
+</p>
+
+<h3 className="text-4xl font-black text-orange-500 mt-4">
+{resultAnalytics.totalSubmitted}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-green-500/10">
+
+<p className="text-gray-400">
+Approved Results
+</p>
+
+<h3 className="text-4xl font-black text-green-400 mt-4">
+{resultAnalytics.totalApproved}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-yellow-500/10">
+
+<p className="text-gray-400">
+Pending Results
+</p>
+
+<h3 className="text-4xl font-black text-yellow-400 mt-4">
+{resultAnalytics.pendingResults}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-purple-500/10">
+
+<p className="text-gray-400">
+Prize Distributed
+</p>
+
+<h3 className="text-4xl font-black text-purple-400 mt-4">
+🪙 {resultAnalytics.totalPrizeDistributed}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-yellow-500/20">
+
+<p className="text-gray-400">
+🥇 TOP 1
+</p>
+
+<h3 className="text-2xl font-black text-yellow-400 mt-4">
+{resultAnalytics.top1Player}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-gray-500/20">
+
+<p className="text-gray-400">
+🥈 TOP 2
+</p>
+
+<h3 className="text-2xl font-black text-gray-300 mt-4">
+{resultAnalytics.top2Player}
+</h3>
+
+</div>
+
+<div className="bg-[#111] rounded-3xl p-6 border border-orange-500/20">
+
+<p className="text-gray-400">
+🥉 TOP 3
+</p>
+
+<h3 className="text-2xl font-black text-orange-400 mt-4">
+{resultAnalytics.top3Player}
+</h3>
+
+</div>
+
+</div>
+
+</section>
+
+)
+}
+
       {/* GAME MODES */}
 
 <section className="max-w-7xl mx-auto px-6 pt-10">
@@ -3282,9 +3499,94 @@ PUBLISH ROOM DETAILS
 isAdmin ? (
 
 <button
-onClick={() =>
-setSelectedResultTournament(item)
+onClick={async () => {
+
+try {
+
+const winners =
+playerResults.filter(
+(player) =>
+
+player.tournamentId ===
+item.id
+);
+
+for (const player of winners) {
+
+const playerRef =
+ref(
+database,
+`users/${player.userId}`
+);
+
+const playerSnap =
+await get(playerRef);
+
+const playerData =
+playerSnap.val();
+
+await update(
+playerRef,
+{
+
+coins:
+
+Number(
+playerData?.coins || 0
+) +
+
+Number(
+playerData?.pendingCoins || 0
+),
+
+pendingCoins: 0,
+
 }
+
+);
+
+await push(
+ref(
+database,
+`notifications/${player.userId}`
+),
+{
+title:
+"🏆 MATCH RESULT PUBLISHED",
+
+message:
+`You achieved #${player.position} in ${item.tournamentTitle}`,
+
+time:
+new Date().toLocaleString(),
+
+seen: false,
+}
+);
+
+}
+
+await update(
+ref(
+database,
+`liveTournaments/${item.id}`
+),
+{
+resultPublished: true,
+}
+);
+
+alert(
+"Result Published Successfully 🔥"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
 className="w-full mt-6 bg-purple-500 text-black py-4 rounded-2xl font-black"
 >
 PUBLISH RESULT
@@ -4093,6 +4395,26 @@ key={item.id}
 className="bg-[#111] rounded-2xl p-4 border border-purple-500/10"
 >
 
+<p className="text-green-400 mt-2">
+APPROVED POSITION:
+#{item.approvedPosition || "Pending"}
+</p>
+
+<p className="text-yellow-400 mt-2">
+WIN COINS:
+🪙 {item.winCoins || 0}
+</p>
+
+{
+item.approved && (
+
+<span className="bg-green-500 text-black px-3 py-1 rounded-full text-xs font-black">
+APPROVED
+</span>
+
+)
+}
+
 <div className="flex items-center justify-between gap-4 flex-wrap">
 
 <div>
@@ -4143,12 +4465,17 @@ const currentTop3 =
 playerData?.top3 || 0;
 
 const duplicatePosition =
-Object.values(
-matchRanks
-).find(
-(rank) =>
+playerResults.find(
+(player) =>
 
-Number(rank.position) ===
+player.tournamentId ===
+selectedResultTournament.id &&
+
+player.approved === true &&
+
+Number(
+player.approvedPosition
+) ===
 Number(item.position)
 );
 
@@ -4225,6 +4552,12 @@ winCoins,
 lastPosition:
 Number(item.position),
 
+lastTournament:
+selectedResultTournament.tournamentTitle,
+
+lastTournamentId:
+selectedResultTournament.id,
+
 wins:
 
 Number(item.position) === 1
@@ -4245,6 +4578,20 @@ approved: true,
 
 }
 
+);
+
+await update(
+ref(
+database,
+`playerResults/${item.id}`
+),
+{
+approved: true,
+approvedPosition:
+Number(item.position),
+winCoins:
+winCoins,
+}
 );
 
 alert(
