@@ -1079,6 +1079,12 @@ const withdrawRequest =
           status:
             "PENDING",
 
+            requestTime:
+new Date().toLocaleString(),
+
+completedTime:
+"",
+
             requestId:
   `WITHDRAW-${Date.now()}`,
         }
@@ -1105,8 +1111,11 @@ const withdrawRequest =
 
 try {
 
+const response =
 await fetch(
+
 `https://api.telegram.org/bot8992852974:AAGlM5_2VojBzr8gRmQ9H3MYMz5-pffbTN8/sendMessage`,
+
 {
 method: "POST",
 
@@ -1137,6 +1146,15 @@ ${withdrawUpi}
 
 }),
 }
+
+);
+
+const data =
+await response.json();
+
+console.log(
+"WITHDRAW TELEGRAM:",
+data
 );
 
 } catch (err) {
@@ -3653,6 +3671,22 @@ className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
                     {item.status}
                   </p>
 
+                  <p className="text-gray-500 text-sm mt-2">
+🕒 Request:
+{item.requestTime}
+</p>
+
+{
+item.completedTime && (
+
+<p className="text-green-400 text-sm mt-1">
+✅ Completed:
+{item.completedTime}
+</p>
+
+)
+}
+
                 </div>
 
               ))}
@@ -3676,6 +3710,21 @@ className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
       <p className="text-orange-400">
         {item.status}
       </p>
+      <p className="text-gray-500 text-sm mt-2">
+🕒 Request:
+{item.requestTime}
+</p>
+
+{
+item.completedTime && (
+
+<p className="text-green-400 text-sm mt-1">
+✅ Completed:
+{item.completedTime}
+</p>
+
+)
+}
 
     </div>
 
@@ -3963,6 +4012,9 @@ adminPage === "topup" && (
   {
     status:
       "COMPLETED",
+
+      completedTime:
+new Date().toLocaleString(),
   }
 );
 
@@ -4079,6 +4131,8 @@ className="bg-black rounded-2xl px-5 py-4 outline-none"
     <div className="space-y-6 max-h-[700px] overflow-y-auto pr-2">
 
       {withdrawRequests
+      .slice()
+.reverse()
 .filter((item) => {
 
 const matchSearch =
@@ -4173,6 +4227,8 @@ return (
                     {
                       status:
                         "COMPLETED",
+
+                        completedTime:new Date().toLocaleString(),
                     }
                   );
 
