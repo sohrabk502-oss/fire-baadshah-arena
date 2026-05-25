@@ -3279,38 +3279,26 @@ PUBLISH ROOM DETAILS
 )
 }
 {
-isAdmin && (
-
+isAdmin ? (
 
 <button
-
 onClick={() =>
-setSelectedResultTournament(
-item
-)
+setSelectedResultTournament(item)
 }
 className="w-full mt-6 bg-purple-500 text-black py-4 rounded-2xl font-black"
 >
-  
 PUBLISH RESULT
 </button>
 
-)}
-{
-!isAdmin && (
+) : (
 
 <button
 onClick={() =>
-setSelectedResultTournament(
-item
-)
+setSelectedResultTournament(item)
 }
 className="w-full mt-4 bg-green-500 text-black py-4 rounded-2xl font-black"
 >
-  
-
-
-UPLOAD RESULT
+SUBMIT RESULT
 </button>
 
 )
