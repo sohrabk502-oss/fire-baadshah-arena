@@ -6241,7 +6241,7 @@ showWallet && user && (
 
 <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 px-4">
 
-  <div className="bg-[#111] w-full max-w-4xl rounded-[40px] p-5 md:p-8 border border-orange-500/20 max-h-[90vh] overflow-y-auto">
+ <div className="bg-[#111] w-full max-w-6xl h-[150vh] rounded-[40px] p-5 md:p-8 border border-orange-500/20 overflow-y-auto">
 
     <div className="flex items-center justify-between mb-8">
 
@@ -6302,6 +6302,9 @@ className="w-52 mx-auto rounded-3xl border border-orange-500/20 cursor-pointer"
           
         </p>
 
+<p className="text-gray-400 mt-4 mb-2">
+ENTER UTR NUMBER
+</p>
         <input
           type="text"
           placeholder="Enter UTR Number"
@@ -6348,9 +6351,13 @@ paymentScreenshot && (
 )
 }
 
+<p className="text-gray-400 mt-4 mb-2">
+1rupee = 1 coins
+</p>
+
 <input
 type="number"
-placeholder="Coins Amount"
+placeholder="Add Coins Amount"
 value={topupAmount}
 onChange={(e) =>
 setTopupAmount(
@@ -6367,9 +6374,91 @@ className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
           ADD COINS
         </button>
 
+
+
+{/* ================= ADD COINS HISTORY ================= */}
+
+<h4 className="text-xl font-black mb-4 mt-8 text-orange-400">
+ADD COINS HISTORY
+</h4>
+
+<div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+
+{paymentRequests
+.filter(
+(item) =>
+item.userId === user.uid
+)
+.reverse()
+.map((item) => (
+
+<div
+key={item.id}
+className="bg-[#111] rounded-2xl p-4 mb-3"
+>
+
+<p className="text-orange-400 font-black">
+🪙 {item.amount} Coins
+</p>
+
+<p className={`font-black mt-2 ${
+item.status === "PENDING"
+
+? "text-yellow-400"
+
+: item.status === "APPROVED"
+
+? "text-green-400"
+
+: "text-red-400"
+}`}>
+
+{
+item.status === "PENDING"
+
+? "⏳ ADD COINS PENDING"
+
+: item.status === "APPROVED"
+
+? "✅ ADD COINS COMPLETED"
+
+: item.status === "REJECTED"
+
+? "❌ ADD COINS REJECTED"
+
+: item.status
+}
+
+</p>
+
+<p className="text-gray-500 text-sm mt-2">
+🕒 Request:
+{item.createdAt}
+</p>
+
+{
+item.completedTime && (
+
+<p className="text-green-400 text-sm mt-1">
+✅ COMPLETED:
+{item.completedTime}
+</p>
+
+)
+}
+
+</div>
+
+))}
+
+</div>
+
       </div>
 
-      <div className="bg-black rounded-3xl p-6 border border-green-500/10">
+
+
+
+      <div className="bg-black rounded-3xl p-6 border border-green-500/10 h-[130vh]">
 
         <h3 className="text-3xl font-black text-green-400 mb-6">
           WITHDRAW
@@ -6406,41 +6495,73 @@ className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
           WITHDRAW NOW
         </button>
 
-        <div className="mt-8">
+       <div className="mt-8">
 
-          <h4 className="text-xl font-black mb-4">
-            RECENT REQUESTS
-          </h4>
 
-          <div className="space-y-3">
+{/* ================= WITHDRAW HISTORY ================= */}
 
-            {withdrawRequests
-              .filter(
-                (item) =>
-                  item.userId ===
-                  user.uid
-              )
-              .map((item) => (
+<h4 className="text-xl font-black mb-4 mt-8">
+WITHDRAW HISTORY
+</h4>
 
-                
+<div className="space-y-3 max-h-[1160px] overflow-y-auto pr-2">
 
-                <div
-                  key={item.id}
-                  className="bg-[#111] rounded-2xl p-4"
-                >
+{withdrawRequests
+.filter(
+(item) =>
+item.userId === user.uid
+)
+.reverse()
+.map((item) => (
 
-                  <p>
-                    💰 {item.amount} Coins
-                  </p>
+<div
+key={item.id}
+className="bg-[#111] rounded-2xl p-4 mb-3"
+>
 
-                  <p className="text-orange-400">
-                    {item.status}
-                  </p>
+<p className="text-orange-400 font-black">
+🪙 {item.amount} Coins
+</p>
 
-                  <p className="text-gray-500 text-sm mt-2">
+<p className="text-sm text-gray-400 mt-1">
+UPI: {item.upi}
+</p>
+
+<p className={`font-black mt-2 ${
+item.status === "PENDING"
+
+? "text-yellow-400"
+
+: item.status === "COMPLETED"
+
+? "text-green-400"
+
+: "text-red-400"
+}`}>
+
+{
+item.status === "PENDING"
+
+? "⏳ WITHDRAW PENDING"
+
+: item.status === "COMPLETED"
+
+? "✅ WITHDRAW CMPLT"
+
+: item.status === "REJECTED"
+
+? "❌ WITHDRAW REJECTED"
+
+: item.status
+}
+
+</p>
+
+<p className="text-gray-500 text-sm mt-2">
 🕒 Request:
 {item.requestTime}
 </p>
+
 {
 item.status === "PENDING" && (
 
@@ -6451,6 +6572,7 @@ item.status === "PENDING" && (
 
 )
 }
+
 {
 item.completedTime && (
 
@@ -6462,49 +6584,12 @@ item.completedTime && (
 )
 }
 
-                </div>
-
-              ))}
-{paymentRequests
-  .filter(
-    (item) =>
-      item.userId ===
-      user.uid
-  )
-  .map((item) => (
-
-    <div
-      key={item.id}
-      className="bg-[#111] rounded-2xl p-4 mb-3"
-    >
-
-      <p>
-        🪙 {item.amount} Coins
-      </p>
-
-      <p className="text-orange-400">
-        {item.status}
-      </p>
-      <p className="text-gray-500 text-sm mt-2">
-🕒 Request:
-{item.requestTime}
-</p>
-
-{
-item.completedTime && (
-
-<p className="text-green-400 text-sm mt-1">
-✅ COMPLETED:
-{item.completedTime}
-</p>
-
-)
-}
-
-    </div>
+</div>
 
 ))}
-          </div>
+
+</div>
+
 
         </div>
 
