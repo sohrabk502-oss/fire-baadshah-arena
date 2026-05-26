@@ -6441,12 +6441,21 @@ className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
 🕒 Request:
 {item.requestTime}
 </p>
+{
+item.status === "PENDING" && (
 
+<p className="text-yellow-400 text-sm mt-1">
+⏳ WITHDRAW PENDING:
+{item.createdAt}
+</p>
+
+)
+}
 {
 item.completedTime && (
 
 <p className="text-green-400 text-sm mt-1">
-✅ Completed:
+✅ WITHDRAW COMPLETED:
 {item.completedTime}
 </p>
 
@@ -6485,7 +6494,7 @@ item.completedTime && (
 item.completedTime && (
 
 <p className="text-green-400 text-sm mt-1">
-✅ Completed:
+✅ COMPLETED:
 {item.completedTime}
 </p>
 
@@ -7429,6 +7438,7 @@ new Date().toLocaleString(),
   </section>
 
 )}
+
 {/* WITHDRAW REQUESTS */}
 
 {isAdmin &&
@@ -7562,9 +7572,12 @@ return (
 </p>
 
             <p>
-              Status:
-              {item.status}
-            </p>
+
+Status:
+
+{item.status}
+
+</p>
 
             <button
               onClick={async () => {
@@ -7774,7 +7787,7 @@ className="text-purple-400 mt-4 block break-all"
 <div className="bg-[#111] rounded-[40px] p-10 border border-orange-500/10">
 
 <h2 className="text-5xl font-black text-orange-500 text-center mb-10">
-🔥 CREATE TOURNAMENT
+🔥 CREATE TOURNAMENT 🔥
 </h2>
 
 <div className="grid md:grid-cols-2 gap-6">
