@@ -137,17 +137,6 @@ const [customPrize,
   const [top1, setTop1] =
     useState("");
 
-  const [top2, setTop2] =
-    useState("");
-
-  const [top3, setTop3] =
-    useState("");
-
-  const [remainingPrize, setRemainingPrize] =
-    useState("");
-
-  const [perPlayerPrize, setPerPlayerPrize] =
-    useState("");
 
   // ================= LIVE TOURNAMENTS =================
 
@@ -454,53 +443,15 @@ useState(null);
     const totalCollection =
       fee * players;
 
-    // ADMIN PROFIT 20%
+    // ADMIN PROFIT 18%
     const profit =
-      totalCollection * 0.20;
+      totalCollection * 0.18;
 
     // FINAL PRIZE POOL
     const prizePool =
       totalCollection - profit;
 
-    // TOP 1 = 25%
-    const firstPrize =
-      prizePool * 0.25;
-
-    // TOP 2 = 15%
-    const secondPrize =
-      prizePool * 0.15;
-
-    // TOP 3 = 10%
-    const thirdPrize =
-      prizePool * 0.10;
-
-    // REMAINING AMOUNT
-    const remainPrize =
-      prizePool -
-      (
-        firstPrize +
-        secondPrize +
-        thirdPrize
-      );
-
-    // REMAINING PLAYERS
-    // 42% WINNERS
-
-const totalWinners =
-  Math.floor(
-    players * 0.42
-  );
-
-// TOP 1,2,3 already fixed
-const remainingPlayers =
-  totalWinners - 3;
-
-    // TOP 4-20 EACH PLAYER
-    const eachPlayerPrize =
-  remainingPlayers > 0
-    ? remainPrize /
-      remainingPlayers
-    : 0;
+    
 
     // SAVE STATES
 
@@ -511,28 +462,88 @@ const remainingPlayers =
     setTotalPrizePool(
       prizePool.toFixed(2)
     );
+        const mode =
+tournamentType;
 
-    setTop1(
-      firstPrize.toFixed(2)
-    );
+if (
+mode === "SOLO"
+) {
 
-    setTop2(
-      secondPrize.toFixed(2)
-    );
+setTop1(
+Math.floor(
+prizePool * 0.18
+)
+);
 
-    setTop3(
-      thirdPrize.toFixed(2)
-    );
+}
 
-    setRemainingPrize(
-      remainPrize.toFixed(2)
-    );
+else if (
+mode === "DUO"
+) {
 
-    setPerPlayerPrize(
-      eachPlayerPrize.toFixed(2)
-    );
+setTop1(
+Math.floor(
+prizePool / 2
+)
+);
 
-  }, [entryFee, totalTeams]);
+}
+
+else if (
+mode === "3V3"
+) {
+
+setTop1(
+Math.floor(
+prizePool / 3
+)
+);
+
+}
+
+else if (
+mode === "SQUAD" ||
+mode === "4V4"
+) {
+
+setTop1(
+Math.floor(
+prizePool / 4
+)
+);
+
+}
+
+else if (
+mode === "1V1"
+) {
+
+setTop1(
+Math.floor(
+prizePool
+)
+);
+
+}
+
+else if (
+mode === "1V2"
+) {
+
+setTop1(
+Math.floor(
+prizePool / 2
+)
+);
+
+}
+    
+
+  }, [
+entryFee,
+totalTeams,
+tournamentType
+]);
 
   // ================= PUSH NOTIFICATIONS =================
 
@@ -2220,6 +2231,56 @@ joinData[
         }
       );
 
+      // ================= LIVE PRIZE POOL UPDATE =================
+
+const joinedCount =
+
+joinedPlayers.filter(
+(player) =>
+
+player.tournamentId ===
+tournament.id
+
+).length + 1;
+
+const totalCollection =
+
+Number(
+tournament.entryFee
+) * joinedCount;
+
+const adminProfit =
+
+Math.floor(
+totalCollection * 0.18
+);
+
+const currentPrizePool =
+
+Math.floor(
+totalCollection -
+adminProfit
+);
+
+await update(
+
+ref(
+database,
+`liveTournaments/${tournament.id}`
+),
+
+{
+
+joinedCount,
+
+currentPrizePool,
+
+currentAdminProfit:
+adminProfit,
+
+}
+
+);
       alert(
         "Tournament Joined Successfully 🔥"
       );
@@ -2263,11 +2324,10 @@ customPrize,
             totalPrizePool,
 
             top1,
-            top2,
-            top3,
-
-            remainingPrize,
-            perPlayerPrize,
+            joinedCount: 0,
+currentPrizePool: 0,
+currentAdminProfit: 0,
+            
 
             roomId: "",
             roomPassword: "",
@@ -2951,214 +3011,363 @@ Prize Distributed
 
 <section className="max-w-7xl mx-auto px-6 py-20">
 
-  <h2 className="text-5xl font-black text-green-400 mb-12">
-    {selectedMode} UPCOMING MATCHES
-  </h2>
+<h2 className="text-5xl font-black text-green-400 mb-12">
+🔥 {selectedMode} UPCOMING MATCHES
+</h2>
 
-  <div className="grid md:grid-cols-3 gap-8">
+<div className="grid md:grid-cols-3 gap-8">
 
-    {liveTournaments
-      .filter((item) => {
+{liveTournaments
 
-        const now =
-          new Date();
+.filter((item) => {
 
-       const tournamentTime =
-  new Date(
-    `${item.matchDate}T${item.matchTime}`
-  );
+const now =
+new Date();
 
-        const diff =
-          (
-            tournamentTime -
-            now
-          ) / 1000 / 60;
-
-
-return (
-  diff > 10 &&
-  item.tournamentType
-    ?.trim()
-    .toUpperCase() ===
-  selectedMode
-    ?.trim()
-    .toUpperCase()
+const tournamentTime =
+new Date(
+`${item.matchDate}T${item.matchTime}`
 );
 
-      })
-      .map((item) => (
+const diff =
+(
+tournamentTime -
+now
+) / 1000 / 60;
 
-        <div
-          key={item.id}
-          className="bg-[#111] rounded-[35px] p-5 md:p-8 border border-green-500/10"
-        >
+return (
+diff > 10 &&
 
-          <div className="flex justify-between mb-5">
+item.tournamentType
+?.trim()
+.toUpperCase() ===
 
-            <span className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-black">
-              UPCOMING
-            </span>
+selectedMode
+?.trim()
+.toUpperCase()
+);
 
-            <span>
-              {item.matchTime}
-            </span>
+})
 
-          </div>
+.map((item) => (
 
-          <h3 className="text-3xl font-black mb-6">
-            {item.tournamentTitle}
-          </h3>
-          <p className="text-blue-400 mb-4 font-bold">
-  🗺️ {item.selectedMap}
-</p>
-             <div className="space-y-4 text-lg">
-
-                  <div className="flex justify-between">
-                    <span>
-                      Entry Fee
-                    </span>
-
-                    <span className="text-orange-400">
-                      {item.entryFee} Coins
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span>
-                      Joined Players
-                    </span>
-
-                    <span>
-                      {
-                        item.totalTeams
-                      }
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span>
-                      Prize Pool
-                    </span>
-
-                    <span className="text-orange-500">
-                      {item.totalPrizePool} Coins
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span>
-                      Top 1
-                    </span>
-
-                    <span>
-                      {item.top1} Coins
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span>
-                      Top 2
-                    </span>
-
-                    <span>
-                      {item.top2} Coins
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span>
-                      Top 3
-                    </span>
-
-                    <span>
-                      {item.top3} Coins
-                    </span>
-                  </div>
-
-                  {
-item.tournamentType ===
-"SOLO" ||
-
-item.tournamentType ===
-"DUO" ||
-
-item.tournamentType ===
-"SQUAD"
-
-? (
-
-<div className="flex justify-between">
-
-  <span>
-    Top 4-
-    {
-      Number(
-        item.totalTeams
-      ) > 0
-
-      ? Math.floor(
-          Number(
-            item.totalTeams
-          ) * 0.42
-        )
-
-      : 0
-    }
-  </span>
-
-  <span className="text-green-400">
-    {item.perPlayerPrize}
-    Coins each
-  </span>
-
-</div>
-
-) : (
-
-<div className="flex justify-between">
-
-  <span>
-    Winners:
-    {
-      item.customWinners
-    }
-  </span>
-
-  <span className="text-green-400">
-    {
-      item.customPrize
-    }
-    Coins
-  </span>
-
-</div>
-
-)}
-<button
-  onClick={() => {
-
-    setSelectedTournament(
-      item
-    );
-
-    setShowJoinPopup(
-      true
-    );
-
-  }}
- className="w-full mt-6 bg-orange-500 text-black py-3 md:py-4 rounded-2xl font-black text-sm md:text-base"
+<div
+key={item.id}
+className="bg-[#111] rounded-[35px] p-6 border border-green-500/10 hover:border-green-500/30 duration-300"
 >
-  
-  JOIN TOURNAMENT
+
+{/* TOP */}
+
+<div className="flex items-center justify-between mb-5">
+
+<span className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-black">
+UPCOMING
+</span>
+
+<span className="text-gray-400 font-bold">
+🕒 {item.matchTime}
+</span>
+
+</div>
+
+{/* TITLE */}
+
+<h3 className="text-3xl font-black mb-3">
+{item.tournamentTitle}
+</h3>
+
+<p className="text-orange-400 font-bold mb-2">
+🎮 {item.tournamentType}
+</p>
+
+<p className="text-blue-400 font-bold mb-6">
+🗺️ {item.selectedMap}
+</p>
+
+{/* INFO */}
+
+<div className="space-y-4 text-lg">
+
+<div className="flex justify-between">
+
+<span>
+💰 Entry Fee
+</span>
+
+<span className="text-orange-400 font-black">
+🪙 {item.entryFee}
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+👥 Players
+</span>
+
+<span className="font-black">
+{item.joinedCount || 0}/{item.totalTeams}
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+🏆 Prize Pool
+</span>
+
+<span className="text-yellow-400 font-black">
+🪙 {item.currentPrizePool || 0}
+</span>
+
+</div>
+
+</div>
+
+{
+item.tournamentType ===
+"SOLO" && (
+
+<div className="space-y-2">
+
+<div className="flex justify-between">
+
+<span>
+🥇 Top 1
+</span>
+
+<span className="text-yellow-400 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.18
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+🥈 Top 2
+</span>
+
+<span className="text-gray-300 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.16
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+🥉 Top 3
+</span>
+
+<span className="text-orange-400 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.14
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+🏅 Top 4-5
+</span>
+
+<span className="text-green-400 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.13
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+🔥 Top 6-10
+</span>
+
+<span className="text-blue-400 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.10
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+⚡ Top 11-20
+</span>
+
+<span className="text-pink-400 font-black">
+
+🪙 {Math.floor(Number(item.totalPrizePool || 0) / 10)} 
+
+</span>
+
+</div>
+
+</div>
+
+)
+}
+
+{/* BUTTON */}
+
+<button
+
+onClick={() => {
+
+setSelectedTournament(
+item
+);
+
+setShowJoinPopup(
+true
+);
+
+}}
+
+className="w-full mt-6 bg-orange-500 hover:bg-orange-400 duration-300 text-black py-4 rounded-2xl font-black text-lg"
+>
+
+🚀 JOIN TOURNAMENT
+
 </button>
 
-                </div>
+{
+isAdmin && (
 
-        </div>
+<button
 
-      ))}
+onClick={async () => {
 
-  </div>
+try {
+
+const tournamentPlayers =
+
+joinedPlayers.filter(
+(player) =>
+
+player.tournamentId ===
+item.id
+);
+
+// REFUND ALL PLAYERS
+
+for (const player of tournamentPlayers) {
+
+const userRef =
+ref(
+database,
+`users/${player.userId}`
+);
+
+const userSnap =
+await get(userRef);
+
+const userData =
+userSnap.val();
+
+await update(
+userRef,
+{
+coins:
+Number(
+userData?.coins || 0
+) +
+Number(item.entryFee || 0),
+}
+);
+
+// SEND NOTIFICATION
+
+await push(
+ref(
+database,
+`notifications/${player.userId}`
+),
+{
+title:
+"❌ MATCH CANCELLED",
+
+message:
+`${item.tournamentTitle} was cancelled. Your ${item.entryFee} coins refunded successfully.`,
+
+time:
+new Date().toLocaleString(),
+
+seen: false,
+}
+);
+
+}
+
+// DELETE TOURNAMENT
+
+await remove(
+ref(
+database,
+`liveTournaments/${item.id}`
+)
+);
+
+alert(
+"Upcoming Match Cancelled 🔥"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="w-full mt-4 bg-red-500 hover:bg-red-400 duration-300 text-white py-4 rounded-2xl font-black text-lg"
+>
+
+❌ CANCEL MATCH
+
+</button>
+
+)
+}
+
+</div>
+
+))}
+
+</div>
 
 </section>
 
@@ -3297,100 +3506,447 @@ ROOM DETAILS
 }
 
                     <span className="text-orange-500">
-                      {item.totalPrizePool} Coins
+                      {item.currentPrizePool || 0} Coins
                     </span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>
-                      Top 1
-                    </span>
+                  <div className="bg-black rounded-2xl p-4 border border-orange-500/10">
 
-                    <span>
-                      {item.top1} Coins
-                    </span>
-                  </div>
+<h3 className="text-orange-400 font-black mb-4">
+🏆 REWARD SYSTEM
+</h3>
 
-                  <div className="flex justify-between">
-                    <span>
-                      Top 2
-                    </span>
-
-                    <span>
-                      {item.top2} Coins
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span>
-                      Top 3
-                    </span>
-
-                    <span>
-                      {item.top3} Coins
-                    </span>
-                  </div>
-
-                  {
+{
 item.tournamentType ===
-"SOLO" ||
+"SOLO" && (
 
-item.tournamentType ===
-"DUO" ||
+<div className="space-y-2">
 
-item.tournamentType ===
-"SQUAD"
-
-? (
+{/* TOP 1 */}
 
 <div className="flex justify-between">
 
-  <span>
-    Top 4-
-    {
-      Number(
-        item.totalTeams
-      ) > 0
+<span>
+🥇 Top 1
+</span>
 
-      ? Math.floor(
-          Number(
-            item.totalTeams
-          ) * 0.42
-        )
+<span className="text-yellow-400 font-black">
 
-      : 0
-    }
-  </span>
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.18
+)
+}
 
-  <span className="text-green-400">
-    {item.perPlayerPrize}
-    Coins each
-  </span>
+</span>
 
 </div>
 
-) : (
+{/* TOP 2 */}
 
 <div className="flex justify-between">
 
-  <span>
-    Winners:
-    {
-      item.customWinners
-    }
-  </span>
+<span>
+🥈 Top 2
+</span>
 
-  <span className="text-green-400">
-    {
-      item.customPrize
-    }
-    Coins
-  </span>
+<span className="text-gray-300 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.16
+)
+}
+
+</span>
 
 </div>
 
+{/* TOP 3 */}
 
-)}
+<div className="flex justify-between">
+
+<span>
+🥉 Top 3
+</span>
+
+<span className="text-orange-400 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.14
+)
+}
+
+</span>
+
+</div>
+
+{/* TOP 4-5 */}
+
+<div className="flex justify-between">
+
+<span>
+🏅 Top 4-5
+</span>
+
+<span className="text-green-400 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.13
+)
+}
+
+</span>
+
+</div>
+
+{/* TOP 6-10 */}
+
+<div className="flex justify-between">
+
+<span>
+🔥 Top 6-10
+</span>
+
+<span className="text-blue-400 font-black">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.10
+)
+}
+
+</span>
+
+</div>
+
+{/* TOP 11-20 */}
+
+<div className="flex justify-between">
+
+<span>
+⚡ Top 11-20
+</span>
+
+<span className="text-pink-400 font-black">
+
+🪙 {Math.floor(Number(item.totalPrizePool || 0) / 10)} 
+
+</span>
+
+</div>
+
+</div>
+
+)
+}
+
+{
+item.tournamentType ===
+"DUO" && (
+
+<div className="space-y-2">
+
+<div className="flex justify-between">
+
+<span>🥇 Team #1</span>
+
+<span className="text-yellow-400">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.40
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>🥈 Team #2</span>
+
+<span className="text-gray-300">
+
+🪙 {
+Math.floor(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.40
+)
+) * 0.30
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>🥉 Team #3</span>
+
+<span className="text-orange-400">
+
+🪙 {
+Math.floor(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.40
+) -
+(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.40
+)
+) * 0.30
+)
+) * 0.20
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>🏅 Team #4</span>
+
+<span className="text-green-400">
+
+🪙 {
+Math.floor(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.40
+) -
+(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.40
+)
+) * 0.30
+) -
+(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.40
+) -
+(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.40
+)
+) * 0.30
+)
+) * 0.20
+)
+) * 0.10
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>💸 Losers</span>
+
+<span className="text-pink-400">
+🪙 {Math.floor(Number(item.totalPrizePool || 0) / 10)} 
+</span>
+
+</div>
+
+</div>
+
+)
+}
+
+{
+(
+item.tournamentType ===
+"SQUAD" ||
+
+item.tournamentType ===
+"4V4"
+) && (
+
+<div className="space-y-2">
+
+<div className="flex justify-between">
+
+<span>🥇 Squad #1</span>
+
+<span className="text-yellow-400">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) * 0.50
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>🥈 Squad #2</span>
+
+<span className="text-gray-300">
+
+🪙 {
+Math.floor(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.50
+)
+) * 0.30
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>🥉 Squad #3</span>
+
+<span className="text-orange-400">
+
+🪙 {
+Math.floor(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.50
+) -
+(
+(
+Number(item.totalPrizePool || 0) -
+(
+Number(item.totalPrizePool || 0) * 0.50
+)
+) * 0.30
+)
+) * 0.20
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>💸 Losers</span>
+
+<span className="text-pink-400">
+🪙 {Math.floor(Number(item.totalPrizePool || 0) / 10)} 
+</span>
+
+</div>
+
+</div>
+
+)
+}
+
+{
+item.tournamentType ===
+"3V3" && (
+
+<div className="space-y-2">
+
+<div className="flex justify-between">
+
+<span>
+👑 Winning Team
+</span>
+
+<span className="text-yellow-400">
+
+🪙 {
+Math.floor(
+item.totalPrizePool
+)
+}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+⚔️ Per Player
+</span>
+
+<span className="text-green-400">
+
+🪙 {
+Math.floor(
+item.totalPrizePool / 3
+)
+}
+
+</span>
+
+</div>
+
+</div>
+
+)
+}
+
+{
+(
+item.tournamentType ===
+"1V1" ||
+
+item.tournamentType ===
+"1V2"
+) && (
+
+<div className="space-y-2">
+
+<div className="flex justify-between">
+<span>👑 Winner</span>
+
+<span className="text-yellow-400">
+🪙 {item.currentPrizePool || 0}
+</span>
+</div>
+
+<div className="flex justify-between">
+<span>🏆 Prize</span>
+
+<span className="text-green-400">
+🪙 {item.currentPrizePool || 0}
+</span>
+</div>
+
+</div>
+
+)
+}
+
+</div>
 {
 isAdmin && (
 
@@ -3496,10 +4052,11 @@ PUBLISH ROOM DETAILS
 
 )
 }
-{
-isAdmin && (
+{isAdmin && (
 
+<>
 <button
+
 onClick={async () => {
 
 try {
@@ -3512,45 +4069,21 @@ player.tournamentId ===
 item.id
 );
 
-for (const player of winners) {
-  let winCoins = 0;
+const uniqueWinners =
+[
+...new Map(
 
-if (Number(player.position) === 1) {
-
-winCoins =
-Number(item.top1 || 0);
-
-}
-
-else if (Number(player.position) === 2) {
-
-winCoins =
-Number(item.top2 || 0);
-
-}
-
-else if (Number(player.position) === 3) {
-
-winCoins =
-Number(item.top3 || 0);
-
-}
-
-else if (
-
-Number(player.position) <=
-Math.floor(
-Number(item.totalTeams || 0) * 0.42
+winners.map(
+(player) => [
+player.userId,
+player
+]
 )
 
-) {
+).values()
+];
 
-winCoins =
-Number(
-item.perPlayerPrize || 0
-);
-
-}
+for (const player of uniqueWinners) {
 
 const playerRef =
 ref(
@@ -3564,24 +4097,55 @@ await get(playerRef);
 const playerData =
 playerSnap.val();
 
-await update(
-playerRef,
-{
+let winCoins = 0;
 
-coins:
+if (
+Number(player.position) === 1
+) {
 
+winCoins =
+Math.floor(
 Number(
-playerData?.coins || 0
-) +
-
-Number(
-playerData?.pendingCoins || 0
-),
-
-pendingCoins: winCoins,
+item.currentPrizePool || 0
+) * 0.50
+);
 
 }
 
+else if (
+Number(player.position) === 2
+) {
+
+winCoins =
+Math.floor(
+Number(
+item.currentPrizePool || 0
+) * 0.30
+);
+
+}
+
+else if (
+Number(player.position) === 3
+) {
+
+winCoins =
+Math.floor(
+Number(
+item.currentPrizePool || 0
+) * 0.20
+);
+
+}
+
+await update(
+playerRef,
+{
+coins:
+Number(
+playerData?.coins || 0
+) + winCoins,
+}
 );
 
 await push(
@@ -3630,11 +4194,109 @@ alert(error.message);
 
 className="w-full mt-6 bg-purple-500 text-black py-4 rounded-2xl font-black"
 >
+
 PUBLISH RESULT
+
 </button>
 
-)
+<button
+
+onClick={async () => {
+
+try {
+
+// FETCH JOINED PLAYERS
+
+const tournamentPlayers =
+
+joinedPlayers.filter(
+(player) =>
+
+player.tournamentId ===
+item.id
+);
+
+// REFUND ALL PLAYERS
+
+for (const player of tournamentPlayers) {
+
+const userRef =
+ref(
+database,
+`users/${player.userId}`
+);
+
+const userSnap =
+await get(userRef);
+
+const userData =
+userSnap.val();
+
+await update(
+userRef,
+{
+coins:
+Number(
+userData?.coins || 0
+) +
+Number(item.entryFee || 0),
 }
+);
+
+// SEND NOTIFICATION
+
+await push(
+ref(
+database,
+`notifications/${player.userId}`
+),
+{
+title:
+"❌ MATCH CANCELLED",
+
+message:
+`${item.tournamentTitle} was cancelled. Your ${item.entryFee} coins refunded successfully.`,
+
+time:
+new Date().toLocaleString(),
+
+seen: false,
+}
+);
+
+}
+
+// DELETE TOURNAMENT
+
+await remove(
+ref(
+database,
+`liveTournaments/${item.id}`
+)
+);
+
+alert(
+"Match Cancelled & Coins Refunded 🔥"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="w-full mt-4 bg-red-500 text-white py-4 rounded-2xl font-black"
+>
+
+❌ CANCEL MATCH
+
+</button>
+</>
+
+)}
+
 
                 </div>
 
@@ -6447,300 +7109,441 @@ className="text-purple-400 mt-4 block break-all"
 </section>
       {/* CREATE TOURNAMENT */}
 
-      {isAdmin && (
+{isAdmin && (
 
-        <section className="max-w-5xl mx-auto px-6 py-20">
+<section className="max-w-5xl mx-auto px-6 py-20">
 
-          <div className="bg-[#111] rounded-[40px] p-10">
+<div className="bg-[#111] rounded-[40px] p-10 border border-orange-500/10">
 
-            <h2 className="text-5xl font-black text-orange-500 text-center mb-10">
-              CREATE TOURNAMENT
-            </h2>
+<h2 className="text-5xl font-black text-orange-500 text-center mb-10">
+🔥 CREATE TOURNAMENT
+</h2>
 
-            <div className="grid md:grid-cols-2 gap-6">
+<div className="grid md:grid-cols-2 gap-6">
 
-              <input
-                type="text"
-                placeholder="Tournament Title"
-                value={
-                  tournamentTitle
-                }
-                onChange={(e) =>
-                  setTournamentTitle(
-                    e.target.value
-                  )
-                }
-                className="bg-black rounded-2xl px-5 py-4 outline-none"
-              />
+<input
+type="text"
+placeholder="Tournament Title"
+value={tournamentTitle}
+onChange={(e) =>
+setTournamentTitle(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none border border-orange-500/10"
+/>
 
-              <input
-                type="number"
-                placeholder="Entry Fee (Coins)"
-                value={entryFee}
-                onChange={(e) =>
-                  setEntryFee(
-                    e.target.value
-                  )
-                }
-                className="bg-black rounded-2xl px-5 py-4 outline-none"
-              />
+<input
+type="number"
+placeholder="Entry Fee"
+value={entryFee}
+onChange={(e) =>
+setEntryFee(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none border border-orange-500/10"
+/>
 
-              <input
-                type="number"
-                placeholder="Joined Players"
-                value={totalTeams}
-                onChange={(e) =>
-                  setTotalTeams(
-                    e.target.value
-                  )
-                }
-                className="bg-black rounded-2xl px-5 py-4 outline-none"
-              />
+<input
+type="number"
+placeholder="Total Players"
+value={totalTeams}
+onChange={(e) =>
+setTotalTeams(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none border border-orange-500/10"
+/>
 
-              <input
-                type="time"
-                placeholder="Match Time"
-                value={matchTime}
-                onChange={(e) =>
-                  setMatchTime(
-                    e.target.value
-                  )
-                }
-                className="bg-black rounded-2xl px-5 py-4 outline-none"
-              />
-              <input
-                type="date"
-                placeholder="Match Date"
-                value={matchDate}
-                onChange={(e) =>
-                  setMatchDate(
-                    e.target.value
-                  )
-                }
-                className="bg-black rounded-2xl px-5 py-4 outline-none"
-              />
-             <select
+<input
+type="date"
+value={matchDate}
+onChange={(e) =>
+setMatchDate(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none border border-orange-500/10"
+/>
 
-  value={tournamentType}
+<input
+type="time"
+value={matchTime}
+onChange={(e) =>
+setMatchTime(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none border border-orange-500/10"
+/>
 
-  onChange={(e) =>
-    setTournamentType(
-      e.target.value
-    )
-  }
-
-  className="bg-black rounded-2xl px-5 py-4 outline-none"
->
-
-  <option value="SOLO">
-    SOLO
-  </option>
-
-  <option value="DUO">
-    DUO
-  </option>
-
-  <option value="SQUAD">
-    SQUAD
-  </option>
-
-  <option value="1V1">
-    1V1
-  </option>
-
-  <option value="1V2">
-    1V2
-  </option>
-
-  <option value="3V3">
-    3V3
-  </option>
-
-  <option value="4V4">
-    4V4
-  </option>
-
-</select>
 <select
-
-  value={selectedMap}
-
-  onChange={(e) =>
-    setSelectedMap(
-      e.target.value
-    )
-  }
-
-  className="bg-black rounded-2xl px-5 py-4 outline-none"
+value={tournamentType}
+onChange={(e) =>
+setTournamentType(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none border border-orange-500/10"
 >
 
-  <option>
-    Bermuda
-  </option>
+<option value="SOLO">
+SOLO
+</option>
 
-  <option>
-    Bermuda 2.0
-  </option>
+<option value="DUO">
+DUO
+</option>
 
-  <option>
-    Kalahari
-  </option>
+<option value="SQUAD">
+SQUAD
+</option>
 
-  <option>
-    Purgatory
-  </option>
+<option value="1V1">
+1V1
+</option>
 
-  <option>
-    Alpine
-  </option>
+<option value="1V2">
+1V2
+</option>
 
-  <option>
-    Nexterra
-  </option>
+<option value="3V3">
+3V3
+</option>
+
+<option value="4V4">
+4V4
+</option>
 
 </select>
-{(
-  tournamentType ===
-    "1V1" ||
 
-  tournamentType ===
-    "1V2" ||
+<select
+value={selectedMap}
+onChange={(e) =>
+setSelectedMap(
+e.target.value
+)
+}
+className="bg-black rounded-2xl px-5 py-4 outline-none border border-orange-500/10"
+>
 
-  tournamentType ===
-    "3V3" ||
+<option>
+Bermuda
+</option>
 
-  tournamentType ===
-    "4V4"
-) && (
+<option>
+Bermuda 2.0
+</option>
 
+<option>
+Kalahari
+</option>
+
+<option>
+Purgatory
+</option>
+
+<option>
+Alpine
+</option>
+
+<option>
+Nexterra
+</option>
+
+</select>
+
+</div>
+
+{/* AUTO PRIZE DISTRIBUTION */}
+
+<div className="bg-black rounded-2xl p-5 border border-orange-500/10 mb-6">
+
+<h3 className="text-2xl font-black text-orange-400 mb-6">
+🏆 AUTO PRIZE DISTRIBUTION
+</h3>
+
+<div className="space-y-3 text-sm">
+
+{/* ADMIN PROFIT */}
+
+<div className="flex items-center justify-between">
+<p className="text-gray-300">
+💰 Admin Profit
+</p>
+
+<p className="text-yellow-400 font-black">
+🪙 {adminProfit}
+</p>
+</div>
+
+{/* PRIZE POOL */}
+
+<div className="flex items-center justify-between">
+<p className="text-gray-300">
+🏆 Prize Pool
+</p>
+
+<p className="text-orange-400 font-black">
+🪙 {totalPrizePool}
+</p>
+</div>
+
+{/* SOLO */}
+
+{tournamentType === "SOLO" && (
 <>
 
-  <input
-    type="number"
-    placeholder="Number Of Winners"
-    value={customWinners}
-    onChange={(e) =>
-      setCustomWinners(
-        e.target.value
-      )
-    }
-    className="bg-black rounded-2xl px-5 py-4 outline-none"
-  />
+<div className="border-t border-orange-500/10 pt-4 mt-4 space-y-2">
 
-  <input
-    type="number"
-    placeholder="Prize Per Winner"
-    value={customPrize}
-    onChange={(e) =>
-      setCustomPrize(
-        e.target.value
-      )
-    }
-    className="bg-black rounded-2xl px-5 py-4 outline-none"
-  />
+<div className="flex justify-between">
+<span className="text-yellow-400">
+🥇 Top 1
+</span>
+
+<span className="text-yellow-400 font-black">
+🪙 {Math.floor(totalPrizePool * 0.18)}
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-gray-300">
+🥈 Top 2
+</span>
+
+<span className="text-gray-300 font-black">
+🪙 {Math.floor(totalPrizePool * 0.16)}
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-orange-400">
+🥉 Top 3
+</span>
+
+<span className="text-orange-400 font-black">
+🪙 {Math.floor(totalPrizePool * 0.14)}
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-cyan-400">
+⚡ Top 4-5
+</span>
+
+<span className="text-cyan-400 font-black">
+🪙 {Math.floor(totalPrizePool * 0.13)}
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-pink-400">
+🔥 Top 6-10
+</span>
+
+<span className="text-pink-400 font-black">
+🪙 {Math.floor(totalPrizePool * 0.10)}
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-green-400">
+🎯 Top 11-20
+</span>
+
+<span className="text-green-400 font-black">
+🪙 {Math.floor(totalPrizePool / 10)} Each
+</span>
+</div>
+
+</div>
 
 </>
+)}
+
+{/* DUO */}
+
+{tournamentType === "DUO" && (
+<>
+
+<div className="border-t border-orange-500/10 pt-4 mt-4 space-y-2">
+
+<div className="flex justify-between">
+<span className="text-yellow-400">
+🥇 Team #1
+</span>
+
+<span className="text-yellow-400 font-black">
+🪙 {Math.floor((totalPrizePool * 0.40) / 2)} Each
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-gray-300">
+🥈 Team #2
+</span>
+
+<span className="text-gray-300 font-black">
+🪙 {Math.floor((totalPrizePool * 0.30) / 2)} Each
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-orange-400">
+🥉 Team #3
+</span>
+
+<span className="text-orange-400 font-black">
+🪙 {Math.floor((totalPrizePool * 0.20) / 2)} Each
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-cyan-400">
+⚡ Team #4
+</span>
+
+<span className="text-cyan-400 font-black">
+🪙 {Math.floor((totalPrizePool * 0.10) / 2)} Each
+</span>
+</div>
+
+</div>
+
+</>
+)}
+
+{/* SQUAD */}
+
+{(tournamentType === "SQUAD" ||
+tournamentType === "4V4") && (
+<>
+
+<div className="border-t border-orange-500/10 pt-4 mt-4 space-y-2">
+
+<div className="flex justify-between">
+<span className="text-yellow-400">
+🥇 Squad #1
+</span>
+
+<span className="text-yellow-400 font-black">
+🪙 {Math.floor((totalPrizePool * 0.50) / 4)} Each
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-gray-300">
+🥈 Squad #2
+</span>
+
+<span className="text-gray-300 font-black">
+🪙 {Math.floor((totalPrizePool * 0.30) / 4)} Each
+</span>
+</div>
+
+<div className="flex justify-between">
+<span className="text-orange-400">
+🥉 Squad #3
+</span>
+
+<span className="text-orange-400 font-black">
+🪙 {Math.floor((totalPrizePool * 0.20) / 4)} Each
+</span>
+</div>
+
+</div>
+
+</>
+)}
+
+{/* 3V3 */}
+
+{tournamentType === "3V3" && (
+<>
+
+<div className="border-t border-orange-500/10 pt-4 mt-4 space-y-2">
+
+<div className="flex justify-between">
+<span className="text-yellow-400">
+🥇 Winner Team
+</span>
+
+<span className="text-yellow-400 font-black">
+🪙 {Math.floor(totalPrizePool / 3)} Each
+</span>
+</div>
+
+</div>
+
+</>
+)}
+
+{/* 1V1 */}
+
+{tournamentType === "1V1" && (
+<>
+
+<div className="border-t border-orange-500/10 pt-4 mt-4 space-y-2">
+
+<div className="flex justify-between">
+<span className="text-yellow-400">
+🥇 Winner
+</span>
+
+<span className="text-yellow-400 font-black">
+🪙 {Math.floor(totalPrizePool)}
+</span>
+</div>
+
+</div>
+
+</>
+)}
+
+{/* 1V2 */}
+
+{tournamentType === "1V2" && (
+<>
+
+<div className="border-t border-orange-500/10 pt-4 mt-4 space-y-2">
+
+<div className="flex justify-between">
+<span className="text-yellow-400">
+🥇 Winners
+</span>
+
+<span className="text-yellow-400 font-black">
+🪙 {Math.floor(totalPrizePool / 2)} Each
+</span>
+</div>
+
+</div>
+
+</>
+)}
+
+</div>
+
+</div>
+
+<button
+onClick={createTournament}
+className="w-full mt-10 bg-orange-500 text-black py-5 rounded-2xl text-xl font-black hover:scale-105 duration-300"
+>
+
+🚀 CREATE TOURNAMENT
+
+</button>
+
+</div>
+
+</section>
 
 )}
 
-            </div>
-
-            {/* AUTO DISTRIBUTION */}
-
-            <div className="mt-10 bg-black rounded-3xl p-8 border border-orange-500/10">
-
-              <h3 className="text-3xl font-black text-orange-500 mb-6">
-                AUTO PRIZE DISTRIBUTION
-              </h3>
-
-              <div className="space-y-4 text-xl">
-
-                <div className="flex justify-between">
-                  <span>
-                    Admin Profit
-                  </span>
-
-                  <span className="text-yellow-400">
-                    {adminProfit} Coins
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>
-                    Prize Pool
-                  </span>
-
-                  <span className="text-orange-500">
-                    {totalPrizePool} Coins
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>
-                    Top 1
-                  </span>
-
-                  <span>
-                    {top1} Coins
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>
-                    Top 2
-                  </span>
-
-                  <span>
-                    {top2} Coins
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>
-                    Top 3
-                  </span>
-
-                  <span>
-                    {top3} Coins
-                  </span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>
-                    Top 4-
-{
-  Number(totalTeams)> 0
-    ? Math.floor(
-        Number(totalTeams) *
-        0.42
-      )
-    : 0
-}
-                  </span>
-
-                  <span className="text-green-400">
-                    {perPlayerPrize} Coins each
-                  </span>
-                </div>
-
-              </div>
-
-            </div>
-
-            <button
-              onClick={
-                createTournament
-              }
-              className="w-full mt-10 bg-orange-500 text-black py-5 rounded-2xl text-xl font-black"
-            >
-              CREATE TOURNAMENT
-            </button>
-
-          </div>
-
-        </section>
-
-            )}
+            
 
       {/* LOGIN POPUP */}
 
