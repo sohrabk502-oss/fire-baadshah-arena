@@ -1751,7 +1751,7 @@ err
 
 }
       alert(
- "Payment Request Submitted 🔥 Please wait 10 minutes for verification. If not completed, contact WhatsApp support: 8085150673"
+ "Payment Request Submitted 🔥 Please wait 10 minutes for verification. If not completed, contact WhatsApp support: 8085150673 भुगतान अनुरोध सबमिट हो गया है 🔥 कृपया सत्यापन के लिए 10 मिनट प्रतीक्षा करें। यदि सत्यापन पूरा नहीं होता है, तो WhatsApp सहायता से संपर्क करें: 8085150673"
 );
 
       setTopupAmount("");
@@ -1924,7 +1924,7 @@ err
 }
 
       alert(
-        "Withdraw Request Submitted 🔥 Please wait 15 minutes for verification. If not completed, contact WhatsApp support: 8085150673"
+        "Withdraw Request Submitted 🔥 Please wait 10 minutes for processing. If not completed, contact WhatsApp support: 8085150673 निकासी अनुरोध सबमिट हो गया है 🔥 कृपया प्रोसेसिंग के लिए 10 मिनट प्रतीक्षा करें। यदि प्रक्रिया पूरी नहीं होती है, तो WhatsApp सहायता से संपर्क करें: 8085150673 "
 );
 
       setWithdrawAmount("");
@@ -2557,7 +2557,9 @@ MAINTENANCE
 </h2>
 
 <p className="text-gray-400 mt-6 text-xl">
-Please come back later.
+The server is currently undergoing maintenance, please check back later
+सर्वर में फिलहाल काम चल रहा है कृपया फिर से बाद में जाँच करें .
+.
 </p>
 
 </div>
@@ -6268,7 +6270,7 @@ MY WALLET
 onClick={() =>
 setShowWithdrawPopup(true)
 }
-className="bg-red-500 text-white px-5 py-3 rounded-2xl font-black"
+className="bg-green-500 text-white px-5 py-3 rounded-2xl font-black"
 >
 💸 WITHDRAW
 </button>
@@ -6484,18 +6486,12 @@ item.completedTime && (
 
 <div className="text-center">
 
-<h3 className="text-3xl font-black text-green-400 mb-4">
-💸 WITHDRAW
-</h3>
-
-<p className="text-gray-400">
-Click Withdraw Button Above
-</p>
+<p className="text-red-400 text-lg">Welcome to our platform!</p>
 
 </div>
 
 </div>
-
+my 
 </div>
 
 </div>
@@ -6526,8 +6522,7 @@ showWithdrawPopup && (
 onClick={() =>
 setShowWithdrawPopup(false)
 }
-className="text-white text-3xl"
->
+className="text-white text-3xl">
 ✕
 </button>
 
@@ -6559,7 +6554,7 @@ className="w-full bg-black rounded-2xl px-4 py-4 outline-none mb-4"
 
 <button
 onClick={withdrawRequest}
-className="w-full bg-red-500 text-white py-4 rounded-2xl font-black"
+className="w-full bg-green-500 text-black py-4 rounded-2xl font-black"
 >
 SUBMIT WITHDRAW
 </button>
