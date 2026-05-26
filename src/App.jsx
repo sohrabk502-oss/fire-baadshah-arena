@@ -2231,7 +2231,7 @@ joinData[
         }
       );
 
-      // ================= LIVE PRIZE POOL UPDATE =================
+     // ================= LIVE PRIZE POOL UPDATE =================
 
 const joinedCount =
 
@@ -2243,11 +2243,65 @@ tournament.id
 
 ).length + 1;
 
+// TEAM MULTIPLIER
+
+let multiplier = 1;
+
+if (
+tournament.tournamentType ===
+"DUO"
+) {
+
+multiplier = 2;
+
+}
+
+else if (
+
+tournament.tournamentType ===
+"SQUAD" ||
+
+tournament.tournamentType ===
+"4V4"
+
+) {
+
+multiplier = 4;
+
+}
+
+else if (
+tournament.tournamentType ===
+"3V3"
+) {
+
+multiplier = 3;
+
+}
+
+else if (
+tournament.tournamentType ===
+"1V2"
+) {
+
+multiplier = 2;
+
+}
+
+// REAL PLAYER COUNT
+
+const realPlayerCount =
+joinedCount * multiplier;
+
+// TOTAL COLLECTION
+
 const totalCollection =
 
 Number(
 tournament.entryFee
-) * joinedCount;
+) * realPlayerCount;
+
+// ADMIN PROFIT
 
 const adminProfit =
 
@@ -2255,12 +2309,16 @@ Math.floor(
 totalCollection * 0.18
 );
 
+// FINAL PRIZE POOL
+
 const currentPrizePool =
 
 Math.floor(
 totalCollection -
 adminProfit
 );
+
+// UPDATE LIVE TOURNAMENT
 
 await update(
 
@@ -2272,6 +2330,8 @@ database,
 {
 
 joinedCount,
+
+realPlayerCount,
 
 currentPrizePool,
 
@@ -4099,15 +4159,27 @@ playerSnap.val();
 
 let winCoins = 0;
 
+const mode =
+item.tournamentType;
+
+const totalPool =
+Number(
+item.currentPrizePool || 0
+);
+
+// ================= SOLO =================
+
+if (
+mode === "SOLO"
+) {
+
 if (
 Number(player.position) === 1
 ) {
 
 winCoins =
 Math.floor(
-Number(
-item.currentPrizePool || 0
-) * 0.50
+totalPool * 0.18
 );
 
 }
@@ -4118,9 +4190,7 @@ Number(player.position) === 2
 
 winCoins =
 Math.floor(
-Number(
-item.currentPrizePool || 0
-) * 0.30
+totalPool * 0.16
 );
 
 }
@@ -4131,12 +4201,249 @@ Number(player.position) === 3
 
 winCoins =
 Math.floor(
-Number(
-item.currentPrizePool || 0
-) * 0.20
+totalPool * 0.14
 );
 
 }
+
+else if (
+
+Number(player.position) === 4 ||
+
+Number(player.position) === 5
+
+) {
+
+winCoins =
+Math.floor(
+totalPool * 0.13
+);
+
+}
+
+else if (
+
+Number(player.position) >= 6 &&
+
+Number(player.position) <= 10
+
+) {
+
+winCoins =
+Math.floor(
+totalPool * 0.10
+);
+
+}
+
+else if (
+
+Number(player.position) >= 11 &&
+
+Number(player.position) <= 20
+
+) {
+
+winCoins =
+Math.floor(
+totalPool / 10
+);
+
+}
+
+}
+
+// ================= DUO =================
+
+else if (
+mode === "DUO"
+) {
+
+let reward = 0;
+
+if (
+Number(player.position) === 1
+) {
+
+reward =
+totalPool * 0.40;
+
+}
+
+else if (
+Number(player.position) === 2
+) {
+
+reward =
+totalPool * 0.30;
+
+}
+
+else if (
+Number(player.position) === 3
+) {
+
+reward =
+totalPool * 0.20;
+
+}
+
+else if (
+Number(player.position) === 4
+) {
+
+reward =
+totalPool * 0.10;
+
+}
+
+winCoins =
+Math.floor(
+reward / 2
+);
+
+}
+
+// ================= SQUAD =================
+
+else if (
+mode === "SQUAD"
+) {
+
+let reward = 0;
+
+if (
+Number(player.position) === 1
+) {
+
+reward =
+totalPool * 0.50;
+
+}
+
+else if (
+Number(player.position) === 2
+) {
+
+reward =
+totalPool * 0.30;
+
+}
+
+else if (
+Number(player.position) === 3
+) {
+
+reward =
+totalPool * 0.20;
+
+}
+
+winCoins =
+Math.floor(
+reward / 4
+);
+
+}
+
+// ================= 4V4 =================
+
+else if (
+mode === "4V4"
+) {
+
+if (
+Number(player.position) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 4
+);
+
+}
+
+}
+
+// ================= 3V3 =================
+
+else if (
+mode === "3V3"
+) {
+
+if (
+Number(player.position) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 3
+);
+
+}
+
+}
+
+// ================= 1V1 =================
+
+else if (
+mode === "1V1"
+) {
+
+if (
+Number(player.position) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool
+);
+
+}
+
+}
+
+// ================= 1V2 =================
+
+else if (
+mode === "1V2"
+) {
+
+// SOLO SIDE WIN
+
+if (
+player.selectedSlot ===
+"SOLO" &&
+
+Number(player.position) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool
+);
+
+}
+
+// DUO SIDE WIN
+
+else if (
+player.selectedSlot ===
+"DUO" &&
+
+Number(player.position) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 2
+);
+
+}
+
+}
+
+// UPDATE USER COINS
 
 await update(
 playerRef,
@@ -4145,6 +4452,29 @@ coins:
 Number(
 playerData?.coins || 0
 ) + winCoins,
+
+winCoins,
+
+wins:
+Number(
+playerData?.wins || 0
+) +
+(
+Number(player.position) === 1
+? 1
+: 0
+),
+
+top3:
+Number(
+playerData?.top3 || 0
+) +
+(
+Number(player.position) <= 3
+? 1
+: 0
+),
+
 }
 );
 
