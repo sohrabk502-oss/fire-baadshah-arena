@@ -76,6 +76,7 @@ export default function FireBaadshahArena() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+
   const [playerName,
   setPlayerName] =
   useState("");
@@ -634,36 +635,73 @@ setTimeout(() => {
 
   // ================= AUTH STATE =================
 
-  useEffect(() => {
+ useEffect(() => {
 
-    const unsubscribe =
-      onAuthStateChanged(
-        auth,
-        (currentUser) => {
+const unsubscribe =
+onAuthStateChanged(
 
-          if (currentUser) {
+auth,
 
-            setUser(currentUser);
+async (currentUser) => {
 
-            if (
-              currentUser.email ===
-              ADMIN_EMAIL
-            ) {
-              setIsAdmin(true);
-            } else {
-              setIsAdmin(false);
-            }
+if (currentUser) {
 
-          } else {
+const userDoc =
+await getDoc(
+doc(
+db,
+"users",
+currentUser.uid
+)
+);
 
-            setUser(null);
-            setIsAdmin(false);
+if (
+userDoc.exists() &&
+userDoc.data().blocked
+) {
 
-          }
-        }
-      );
+alert(
+"Your Account Has Been Blocked 🚫"
+);
 
-    return () => unsubscribe();
+await signOut(auth);
+
+setUser(null);
+
+setIsAdmin(false);
+
+return;
+
+}
+
+setUser(currentUser);
+
+if (
+currentUser.email ===
+ADMIN_EMAIL
+) {
+
+setIsAdmin(true);
+
+} else {
+
+setIsAdmin(false);
+
+}
+
+} else {
+
+setUser(null);
+
+setIsAdmin(false);
+
+}
+
+}
+
+);
+
+return () => unsubscribe();
 
 }, []);
 
@@ -3836,13 +3874,8 @@ Number(item.totalPrizePool || 0) * 0.40
 }
 
 {
-(
 item.tournamentType ===
-"SQUAD" ||
-
-item.tournamentType ===
-"4V4"
-) && (
+"SQUAD" && (
 
 <div className="space-y-2">
 
@@ -3870,12 +3903,7 @@ Number(item.totalPrizePool || 0) * 0.50
 
 🪙 {
 Math.floor(
-(
-Number(item.totalPrizePool || 0) -
-(
-Number(item.totalPrizePool || 0) * 0.50
-)
-) * 0.30
+Number(item.totalPrizePool || 0) * 0.30
 )
 }
 
@@ -3891,20 +3919,36 @@ Number(item.totalPrizePool || 0) * 0.50
 
 🪙 {
 Math.floor(
-(
-Number(item.totalPrizePool || 0) -
-(
-Number(item.totalPrizePool || 0) * 0.50
-) -
-(
-(
-Number(item.totalPrizePool || 0) -
-(
-Number(item.totalPrizePool || 0) * 0.50
+Number(item.totalPrizePool || 0) * 0.20
 )
-) * 0.30
+}
+
+</span>
+
+</div>
+
+</div>
+
 )
-) * 0.20
+}
+
+{
+item.tournamentType ===
+"4V4" && (
+
+<div className="space-y-2">
+
+<div className="flex justify-between">
+
+<span>
+🏆 Winning Team
+</span>
+
+<span className="text-yellow-400">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0)
 )
 }
 
@@ -3914,10 +3958,18 @@ Number(item.totalPrizePool || 0) * 0.50
 
 <div className="flex justify-between">
 
-<span>💸 Losers</span>
+<span>
+👤 Per Player
+</span>
 
-<span className="text-pink-400">
-🪙 {Math.floor(Number(item.totalPrizePool || 0) / 10)} 
+<span className="text-green-400">
+
+🪙 {
+Math.floor(
+Number(item.totalPrizePool || 0) / 4
+)
+} Each
+
 </span>
 
 </div>
@@ -6543,6 +6595,144 @@ blocked:
 
 searchUserProfile();
 
+<div className="bg-[#111] rounded-2xl p-4 mt-4">
+
+<h3 className="text-xl font-black text-orange-400 mb-4">
+💰 WALLET CONTROL
+</h3>
+
+<input
+type="number"
+placeholder="Coins Amount"
+
+value={manualCoins}
+
+onChange={(e) =>
+setManualCoins(
+e.target.value
+)
+}
+
+className="w-full bg-black rounded-2xl px-4 py-3 outline-none mb-4"
+/>
+
+<div className="grid grid-cols-2 gap-3">
+
+<button
+
+onClick={async () => {
+
+try {
+
+const userDoc =
+doc(
+db,
+"users",
+searchUid
+);
+
+const userSnap =
+await getDoc(userDoc);
+
+const userData =
+userSnap.data();
+
+await updateDoc(
+userDoc,
+{
+coins:
+Math.max(
+0,
+Number(
+userData?.coins || 0
+) -
+Number(manualCoins || 0)
+),
+}
+);
+
+alert(
+"Coins Added 🔥"
+);
+
+setManualCoins("");
+
+searchUserProfile();
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="bg-green-500 text-black py-3 rounded-2xl font-black"
+>
+
+➕ ADD
+
+</button>
+
+<button
+
+onClick={async () => {
+
+try {
+
+const userRef =
+ref(
+database,
+`users/${searchUid}`
+);
+
+const userSnap =
+await get(userRef);
+
+const userData =
+userSnap.val();
+
+await update(
+userRef,
+{
+coins:
+Math.max(
+0,
+Number(
+userData?.coins || 0
+) -
+Number(manualCoins || 0)
+),
+}
+);
+
+alert(
+"Coins Deducted 🔥"
+);
+
+setManualCoins("");
+
+searchUserProfile();
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="bg-red-500 text-white py-3 rounded-2xl font-black"
+>
+
+➖ DEDUCT
+
+</button>
+
+</div>
+
+</div>
+
 alert(
 searchedUser.blocked
 ? "User Unblocked 🔥"
@@ -6567,6 +6757,144 @@ searchedUser.blocked
 }
 
 </button>
+
+<div className="bg-black rounded-2xl p-5 border border-orange-500/10 mt-5">
+
+<h3 className="text-2xl font-black text-orange-400 mb-5">
+💰 WALLET CONTROL
+</h3>
+
+<input
+type="number"
+placeholder="Coins Amount"
+
+value={manualCoins}
+
+onChange={(e) =>
+setManualCoins(
+e.target.value
+)
+}
+
+className="w-full bg-[#111] rounded-2xl px-4 py-3 outline-none mb-4"
+/>
+
+<div className="grid grid-cols-2 gap-4">
+
+<button
+
+onClick={async () => {
+
+try {
+
+const userDoc =
+doc(
+db,
+"users",
+searchUid
+);
+
+const userSnap =
+await getDoc(userDoc);
+
+const userData =
+userSnap.data();
+
+await updateDoc(
+userDoc,
+{
+coins:
+Math.max(
+0,
+Number(
+userData?.coins || 0
+) -
+Number(manualCoins || 0)
+),
+}
+);
+
+alert(
+"Coins Added Successfully 🔥"
+);
+
+setManualCoins("");
+
+searchUserProfile();
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="bg-red-500 text-black py-4 rounded-2xl font-black"
+>
+
+➖ DEDUCT COINS
+
+</button>
+
+<button
+
+onClick={async () => {
+
+try {
+
+const userRef =
+ref(
+database,
+`users/${searchUid}`
+);
+
+const userSnap =
+await get(userRef);
+
+const userData =
+userSnap.val();
+
+await update(
+userRef,
+{
+coins:
+Math.max(
+0,
+Number(
+userData?.coins || 0
+) -
+Number(manualCoins || 0)
+),
+}
+);
+
+alert(
+"Coins Deducted Successfully 🔥"
+);
+
+setManualCoins("");
+
+searchUserProfile();
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="bg-green-500 text-white py-4 rounded-2xl font-black"
+>
+
+➕ ADD COINS
+
+</button>
+
+</div>
+
+</div>
 
 </div>
 
@@ -7747,8 +8075,7 @@ Nexterra
 
 {/* SQUAD */}
 
-{(tournamentType === "SQUAD" ||
-tournamentType === "4V4") && (
+{tournamentType === "SQUAD" && (
 <>
 
 <div className="border-t border-orange-500/10 pt-4 mt-4 space-y-2">
@@ -7781,6 +8108,42 @@ tournamentType === "4V4") && (
 <span className="text-orange-400 font-black">
 🪙 {Math.floor((totalPrizePool * 0.20) / 4)} Each
 </span>
+</div>
+
+</div>
+
+</>
+)}
+
+{/* 4V4 */}
+
+{tournamentType === "4V4" && (
+<>
+
+<div className="border-t border-orange-500/10 pt-4 mt-4 space-y-2">
+
+<div className="flex justify-between">
+
+<span className="text-yellow-400">
+🏆 Winning Team
+</span>
+
+<span className="text-yellow-400 font-black">
+🪙 {Math.floor(totalPrizePool)} Team Reward
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span className="text-green-400">
+👤 Per Player
+</span>
+
+<span className="text-green-400 font-black">
+🪙 {Math.floor(totalPrizePool / 4)} Each
+</span>
+
 </div>
 
 </div>
