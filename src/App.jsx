@@ -4070,6 +4070,84 @@ item.tournamentType ===
 
 )
 }
+{/* ================= SUBMIT POSITION ================= */}
+
+{
+joinedPlayers.find(
+(player) =>
+
+player.tournamentId ===
+item.id &&
+
+player.userEmail ===
+user?.email
+) && !item.resultPublished && (
+
+<div className="bg-black rounded-2xl p-5 border border-purple-500/10 mt-5">
+
+<h3 className="text-2xl font-black text-purple-400 mb-4">
+🏆 SUBMIT POSITION
+</h3>
+
+<p className="text-gray-400 text-sm mb-4">
+Submit your final match position with screenshot proof
+</p>
+
+<input
+type="number"
+placeholder="Enter Your Position"
+
+value={resultPosition}
+
+onChange={(e) =>
+setResultPosition(
+e.target.value
+)
+}
+
+className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none mb-4"
+/>
+
+<input
+type="file"
+accept="image/*"
+
+onChange={(e) =>
+setResultScreenshot(
+e.target.files[0]
+)
+}
+
+className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none mb-4"
+/>
+
+{
+resultScreenshot && (
+
+<p className="text-green-400 text-sm mb-4">
+✅ {resultScreenshot.name}
+</p>
+
+)
+}
+
+<button
+
+onClick={() =>
+submitPlayerResult(item)
+}
+
+className="w-full bg-purple-500 text-black py-4 rounded-2xl font-black"
+>
+
+🔥 SUBMIT POSITION
+
+</button>
+
+</div>
+
+)
+}
 
 </div>
 {
@@ -4191,7 +4269,9 @@ playerResults.filter(
 (player) =>
 
 player.tournamentId ===
-item.id
+item.id &&
+
+player.approved === true
 );
 
 const uniqueWinners =
@@ -4209,8 +4289,7 @@ player
 ];
 
 for (const player of uniqueWinners) {
-
-const playerRef =
+  const playerRef =
 ref(
 database,
 `users/${player.userId}`
@@ -4222,6 +4301,7 @@ await get(playerRef);
 const playerData =
 playerSnap.val();
 
+
 let winCoins = 0;
 
 const mode =
@@ -4232,14 +4312,14 @@ Number(
 item.currentPrizePool || 0
 );
 
-// ================= SOLO =================
+// SOLO
 
 if (
 mode === "SOLO"
 ) {
 
 if (
-Number(player.position) === 1
+Number(player.approvedPosition) === 1
 ) {
 
 winCoins =
@@ -4250,7 +4330,7 @@ totalPool * 0.18
 }
 
 else if (
-Number(player.position) === 2
+Number(player.approvedPosition) === 2
 ) {
 
 winCoins =
@@ -4261,7 +4341,7 @@ totalPool * 0.16
 }
 
 else if (
-Number(player.position) === 3
+Number(player.approvedPosition) === 3
 ) {
 
 winCoins =
@@ -4271,244 +4351,47 @@ totalPool * 0.14
 
 }
 
-else if (
-
-Number(player.position) === 4 ||
-
-Number(player.position) === 5
-
-) {
-
-winCoins =
-Math.floor(
-totalPool * 0.13
-);
-
 }
 
-else if (
-
-Number(player.position) >= 6 &&
-
-Number(player.position) <= 10
-
-) {
-
-winCoins =
-Math.floor(
-totalPool * 0.10
-);
-
-}
-
-else if (
-
-Number(player.position) >= 11 &&
-
-Number(player.position) <= 20
-
-) {
-
-winCoins =
-Math.floor(
-totalPool / 10
-);
-
-}
-
-}
-
-// ================= DUO =================
+// DUO
 
 else if (
 mode === "DUO"
 ) {
 
-let reward = 0;
-
 if (
-Number(player.position) === 1
+Number(player.approvedPosition) === 1
 ) {
-
-reward =
-totalPool * 0.40;
-
-}
-
-else if (
-Number(player.position) === 2
-) {
-
-reward =
-totalPool * 0.30;
-
-}
-
-else if (
-Number(player.position) === 3
-) {
-
-reward =
-totalPool * 0.20;
-
-}
-
-else if (
-Number(player.position) === 4
-) {
-
-reward =
-totalPool * 0.10;
-
-}
 
 winCoins =
 Math.floor(
-reward / 2
+(totalPool * 0.40) / 2
 );
 
 }
 
-// ================= SQUAD =================
+}
+
+// SQUAD
 
 else if (
 mode === "SQUAD"
 ) {
 
-let reward = 0;
-
 if (
-Number(player.position) === 1
-) {
-
-reward =
-totalPool * 0.50;
-
-}
-
-else if (
-Number(player.position) === 2
-) {
-
-reward =
-totalPool * 0.30;
-
-}
-
-else if (
-Number(player.position) === 3
-) {
-
-reward =
-totalPool * 0.20;
-
-}
-
-winCoins =
-Math.floor(
-reward / 4
-);
-
-}
-
-// ================= 4V4 =================
-
-else if (
-mode === "4V4"
-) {
-
-if (
-Number(player.position) === 1
+Number(player.approvedPosition) === 1
 ) {
 
 winCoins =
 Math.floor(
-totalPool / 4
+(totalPool * 0.50) / 4
 );
 
 }
 
 }
 
-// ================= 3V3 =================
-
-else if (
-mode === "3V3"
-) {
-
-if (
-Number(player.position) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool / 3
-);
-
-}
-
-}
-
-// ================= 1V1 =================
-
-else if (
-mode === "1V1"
-) {
-
-if (
-Number(player.position) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool
-);
-
-}
-
-}
-
-// ================= 1V2 =================
-
-else if (
-mode === "1V2"
-) {
-
-// SOLO SIDE WIN
-
-if (
-player.selectedSlot ===
-"SOLO" &&
-
-Number(player.position) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool
-);
-
-}
-
-// DUO SIDE WIN
-
-else if (
-player.selectedSlot ===
-"DUO" &&
-
-Number(player.position) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool / 2
-);
-
-}
-
-}
-
-// UPDATE USER COINS
+// UPDATE USER
 
 await update(
 playerRef,
@@ -4518,14 +4401,12 @@ Number(
 playerData?.coins || 0
 ) + winCoins,
 
-winCoins,
-
 wins:
 Number(
 playerData?.wins || 0
 ) +
 (
-Number(player.position) === 1
+Number(player.approvedPosition) === 1
 ? 1
 : 0
 ),
@@ -4535,7 +4416,7 @@ Number(
 playerData?.top3 || 0
 ) +
 (
-Number(player.position) <= 3
+Number(player.approvedPosition) <= 3
 ? 1
 : 0
 ),
@@ -4553,7 +4434,7 @@ title:
 "🏆 MATCH RESULT PUBLISHED",
 
 message:
-`You achieved #${player.position} in ${item.tournamentTitle}`,
+`You achieved #${player.approvedPosition} in ${item.tournamentTitle}`,
 
 time:
 new Date().toLocaleString(),
@@ -6070,13 +5951,108 @@ e.target.files[0]
 
 className="w-full mt-4 bg-black rounded-2xl px-5 py-4 outline-none"
 />
+
 {
 isAdmin && (
+
+<>
+
+{/* APPROVE POSITIONS */}
+
+<div className="bg-black rounded-2xl p-5 border border-green-500/10 mb-5">
+
+<h3 className="text-2xl font-black text-green-400 mb-5">
+✅ APPROVE POSITIONS
+</h3>
+
+<div className="space-y-4 max-h-[400px] overflow-y-auto">
+
+{
+playerResults
+
+.filter(
+(player) =>
+
+player.tournamentId ===
+item.id &&
+
+player.approved !== true
+)
+
+.map((player) => (
+
+<div
+key={player.id}
+className="bg-[#111] rounded-2xl p-4"
+>
+
+<p className="text-orange-400 font-black text-lg">
+👤 {player.playerName}
+</p>
+
+<p className="text-gray-400 mt-2">
+🏆 Position:
+#{player.position}
+</p>
+
+<p className="text-blue-400 mt-2">
+🎮 Slot:
+{player.selectedSlot || "SOLO"}
+</p>
+
 <button
+
 onClick={async () => {
 
 try {
 
+await update(
+ref(
+database,
+`playerResults/${player.id}`
+),
+{
+approved: true,
+approvedPosition:
+player.position,
+}
+);
+
+alert(
+"Position Approved 🔥"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="w-full mt-4 bg-green-500 text-black py-3 rounded-2xl font-black"
+>
+
+APPROVE POSITION
+
+</button>
+
+</div>
+
+))
+}
+
+</div>
+
+</div>
+
+{/* PUBLISH RESULT */}
+
+<button
+
+onClick={async () => {
+
+try {
 
 let winnerImageUrl = "";
 
@@ -6099,73 +6075,368 @@ imageRef
 );
 
 }
+
+const approvedPlayers =
+playerResults.filter(
+(player) =>
+
+player.tournamentId ===
+item.id &&
+
+player.approved === true
+);
+
+if (
+approvedPlayers.length === 0
+) {
+
+alert(
+"No Approved Results ❌"
+);
+
+return;
+
+}
+
 const finalResults = [];
 
-for (const key of Object.keys(matchRanks)) {
+for (const player of approvedPlayers) {
 
-const position =
-matchRanks[key]?.position;
+let winCoins = 0;
 
-const player =
-joinedPlayers.find(
-(p) => p.id === key
+const totalPool =
+Number(
+item.currentPrizePool || 0
 );
 
+// SOLO
+
 if (
-Number(position) === 1
+item.tournamentType ===
+"SOLO"
 ) {
 
-if (player?.userId) {
+if (
+Number(player.approvedPosition) === 1
+) {
 
-await updateDoc(
+winCoins =
+Math.floor(
+totalPool * 0.18
+);
+
+}
+
+else if (
+Number(player.approvedPosition) === 2
+) {
+
+winCoins =
+Math.floor(
+totalPool * 0.16
+);
+
+}
+
+else if (
+Number(player.approvedPosition) === 3
+) {
+
+winCoins =
+Math.floor(
+totalPool * 0.14
+);
+
+}
+
+else if (
+
+Number(player.approvedPosition) >= 4 &&
+
+Number(player.approvedPosition) <= 5
+
+) {
+
+winCoins =
+Math.floor(
+totalPool * 0.13
+);
+
+}
+
+else if (
+
+Number(player.approvedPosition) >= 6 &&
+
+Number(player.approvedPosition) <= 10
+
+) {
+
+winCoins =
+Math.floor(
+totalPool * 0.10
+);
+
+}
+
+else if (
+
+Number(player.approvedPosition) >= 11 &&
+
+Number(player.approvedPosition) <= 20
+
+) {
+
+winCoins =
+Math.floor(
+totalPool / 10
+);
+
+}
+
+}
+
+// DUO
+
+else if (
+item.tournamentType ===
+"DUO"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+(totalPool * 0.40) / 2
+);
+
+}
+
+else if (
+Number(player.approvedPosition) === 2
+) {
+
+winCoins =
+Math.floor(
+(totalPool * 0.30) / 2
+);
+
+}
+
+else if (
+Number(player.approvedPosition) === 3
+) {
+
+winCoins =
+Math.floor(
+(totalPool * 0.20) / 2
+);
+
+}
+
+}
+
+// SQUAD
+
+else if (
+item.tournamentType ===
+"SQUAD"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+(totalPool * 0.50) / 4
+);
+
+}
+
+else if (
+Number(player.approvedPosition) === 2
+) {
+
+winCoins =
+Math.floor(
+(totalPool * 0.30) / 4
+);
+
+}
+
+else if (
+Number(player.approvedPosition) === 3
+) {
+
+winCoins =
+Math.floor(
+(totalPool * 0.20) / 4
+);
+
+}
+
+}
+
+// 4V4
+
+else if (
+item.tournamentType ===
+"4V4"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 4
+);
+
+}
+
+}
+
+// 3V3
+
+else if (
+item.tournamentType ===
+"3V3"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 3
+);
+
+}
+
+}
+
+// 1V1
+
+else if (
+item.tournamentType ===
+"1V1"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool
+);
+
+}
+
+}
+
+// 1V2
+
+else if (
+item.tournamentType ===
+"1V2"
+) {
+
+if (
+player.selectedSlot ===
+"SOLO" &&
+
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool
+);
+
+}
+
+else if (
+player.selectedSlot ===
+"DUO" &&
+
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 2
+);
+
+}
+
+}
+
+const userRef =
 doc(
 db,
 "users",
 player.userId
-),
-{
-wins: increment(1),
-top3: increment(1),
-}
 );
-
-}
-
-}
-
-if (
-Number(position) === 2 ||
-Number(position) === 3
-) {
-
-if (player?.userId) {
 
 await updateDoc(
-doc(
-db,
-"users",
-player.userId
-),
+userRef,
 {
-top3: increment(1),
+coins:
+increment(winCoins),
+
+wins:
+increment(
+Number(player.approvedPosition) === 1
+? 1
+: 0
+),
+
+top3:
+increment(
+Number(player.approvedPosition) <= 3
+? 1
+: 0
+),
 }
 );
-
-}
-
-}
 
 finalResults.push({
 
 name:
-player?.ingameName,
+player.playerName,
 
-uid:
-player?.gameUid,
+position:
+player.approvedPosition,
 
-position,
+coins:
+winCoins,
 
 });
+
+await push(
+ref(
+database,
+`notifications/${player.userId}`
+),
+{
+title:
+"🏆 RESULT PUBLISHED",
+
+message:
+`You achieved #${player.approvedPosition} and won ${winCoins} coins 🔥`,
+
+time:
+new Date().toLocaleString(),
+
+seen: false,
+}
+);
 
 }
 
@@ -6174,24 +6445,18 @@ ref(
 database,
 "matchResults"
 ),
-
 {
 tournamentTitle:
-selectedResultTournament
-.tournamentTitle,
+item.tournamentTitle,
 
 tournamentId:
-selectedResultTournament.id,
+item.id,
 
 tournamentType:
-selectedResultTournament
-.tournamentType,
+item.tournamentType,
 
 map:
-selectedResultTournament
-.selectedMap,
-
-
+item.selectedMap,
 
 results:
 finalResults,
@@ -6203,28 +6468,24 @@ winnerImageUrl ||
 createdAt:
 new Date()
 .toLocaleString(),
+
 completed: "true",
 }
 );
 
-await remove(
+await update(
 ref(
 database,
-"liveTournaments/" +
-selectedResultTournament.id
-)
+`liveTournaments/${item.id}`
+),
+{
+completed: true,
+resultPublished: true,
+}
 );
 
 alert(
-"Result Published 🔥"
-);
-
-setMatchRanks({});
-
-setWinnerScreenshot(null);
-
-setSelectedResultTournament(
-null
+"Result Published Successfully 🔥"
 );
 
 } catch (error) {
@@ -6235,13 +6496,18 @@ alert(error.message);
 
 }}
 
-className="w-full mt-8 bg-purple-500 text-black py-3 md:py-4 rounded-2xl font-black text-sm md:text-base"
+className="w-full mt-8 bg-purple-500 text-black py-4 rounded-2xl font-black"
 >
-PUBLISH RESULT
+
+🏆 PUBLISH RESULT
+
 </button>
+
+</>
 
 )
 }
+
 </div>
 
 </div>
