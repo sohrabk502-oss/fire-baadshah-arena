@@ -6241,7 +6241,7 @@ showWallet && user && (
 
 <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 px-4">
 
- <div className="bg-[#111] w-full max-w-6xl h-[150vh] rounded-[40px] p-5 md:p-8 border border-orange-500/20 overflow-y-auto">
+ <div className="bg-[#111] w-full max-w-6xl h-[92vh] rounded-[40px] p-5 md:p-8 border border-orange-500/20 overflow-y-auto">
 
     <div className="flex items-center justify-between mb-8">
 
