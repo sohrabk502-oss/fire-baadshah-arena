@@ -163,6 +163,12 @@ const [withdrawUpi,
   setWithdrawUpi] =
   useState("");
 
+  const [upi, setUpi] = useState("");
+
+const [withdrawCoins,
+setWithdrawCoins]
+= useState("");
+
 const [withdrawRequests,
   setWithdrawRequests] =
   useState([]);
@@ -201,6 +207,11 @@ const [manualCoins,
 
   const [showWallet, setShowWallet] =
   useState(false);
+
+  const [
+showWithdrawPopup,
+setShowWithdrawPopup
+] = useState(false);
 
   const [adminPage,
 setAdminPage] =
@@ -6241,50 +6252,71 @@ showWallet && user && (
 
 <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 px-4">
 
- <div className="bg-[#111] w-full max-w-6xl h-[92vh] rounded-[40px] p-5 md:p-8 border border-orange-500/20 overflow-y-auto">
+<div className="bg-[#111] w-full max-w-6xl h-[92vh] rounded-[40px] p-5 md:p-8 border border-orange-500/20 overflow-y-auto">
 
-    <div className="flex items-center justify-between mb-8">
+{/* TOP HEADER */}
 
-      <h2 className="text-4xl font-black text-orange-500">
-        MY WALLET
-      </h2>
+<div className="flex items-center justify-between mb-8 gap-4">
 
-      <button
-        onClick={() =>
-          setShowWallet(false)
-        }
-        className="bg-red-500 px-5 py-2 rounded-2xl font-black"
-      >
-        CLOSE
-      </button>
+<h2 className="text-4xl font-black text-orange-500">
+MY WALLET
+</h2>
 
-    </div>
+<div className="flex gap-3">
 
-    <div className="bg-black rounded-3xl p-8 text-center border border-orange-500/10">
+<button
+onClick={() =>
+setShowWithdrawPopup(true)
+}
+className="bg-red-500 text-white px-5 py-3 rounded-2xl font-black"
+>
+💸 WITHDRAW
+</button>
 
-      <p className="text-gray-400 text-lg">
-        AVAILABLE BALANCE
-      </p>
+<button
+onClick={() =>
+setShowWallet(false)
+}
+className="bg-red-500 px-5 py-3 rounded-2xl font-black"
+>
+CLOSE
+</button>
 
-      <h1 className="text-6xl font-black text-orange-500 mt-3">
-        🪙 {coins}
-      </h1>
+</div>
 
-    </div>
+</div>
 
-    <div className="grid md:grid-cols-2 gap-8 mt-10">
+{/* BALANCE */}
 
-      <div className="bg-black rounded-3xl p-6 border border-orange-500/10">
+<div className="bg-black rounded-3xl p-8 text-center border border-orange-500/10">
 
-        <h3 className="text-3xl font-black text-orange-500 mb-6">
-          ADD COINS
-        </h3>
+<p className="text-gray-400 text-lg">
+AVAILABLE BALANCE
+</p>
+
+<h1 className="text-6xl font-black text-orange-500 mt-3">
+🪙 {coins}
+</h1>
+
+</div>
+
+{/* MAIN GRID */}
+
+<div className="grid md:grid-cols-2 gap-8 mt-10">
+
+{/* ================= ADD COINS ================= */}
+
+<div className="bg-black rounded-3xl p-6 border border-orange-500/10">
+
+<h3 className="text-3xl font-black text-orange-500 mb-6">
+ADD COINS
+</h3>
 
 <p className="text-center text-orange-400 font-bold mb-4">
 QR DOWNLOAD KAR KE PAYMENT KARE
 </p>
 
-       <a
+<a
 href={paymentQR}
 download="FIRE-BAADSHAH-QR"
 >
@@ -6297,27 +6329,27 @@ className="w-52 mx-auto rounded-3xl border border-orange-500/20 cursor-pointer"
 
 </a>
 
-        <p className="text-center text-green-400 mt-5 font-bold">
-          8085150673@fam
-          
-        </p>
+<p className="text-center text-green-400 mt-5 font-bold">
+8085150673@fam
+</p>
 
 <p className="text-gray-400 mt-4 mb-2">
 ENTER UTR NUMBER
 </p>
-        <input
-          type="text"
-          placeholder="Enter UTR Number"
-          value={utrNumber}
-          onChange={(e) =>
-            setUtrNumber(
-              e.target.value
-            )
-          }
-          className="w-full mt-6 bg-[#111] rounded-2xl px-5 py-4 outline-none"
-        />
 
-     <p className="text-gray-400 mt-4 mb-2">
+<input
+type="text"
+placeholder="Enter UTR Number"
+value={utrNumber}
+onChange={(e) =>
+setUtrNumber(
+e.target.value
+)
+}
+className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none"
+/>
+
+<p className="text-gray-400 mt-4 mb-2">
 PAYMENT SCREENSHOT
 </p>
 
@@ -6332,8 +6364,6 @@ e.target.files[0];
 
 setPaymentScreenshot(file);
 
-console.log(file);
-
 }}
 
 className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none"
@@ -6343,9 +6373,7 @@ className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none"
 paymentScreenshot && (
 
 <p className="text-green-400 mt-2 text-sm">
-
 {paymentScreenshot.name}
-
 </p>
 
 )
@@ -6364,27 +6392,26 @@ setTopupAmount(
 e.target.value
 )
 }
-className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
+className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none"
 />
 
-        <button
-          onClick={selfTopup}
-          className="w-full mt-6 bg-orange-500 text-black py-4 rounded-2xl font-black"
-        >
-          ADD COINS
-        </button>
+<button
+onClick={selfTopup}
+className="w-full mt-6 bg-orange-500 text-black py-4 rounded-2xl font-black"
+>
+ADD COINS
+</button>
 
-
-
-{/* ================= ADD COINS HISTORY ================= */}
+{/* ADD COINS HISTORY */}
 
 <h4 className="text-xl font-black mb-4 mt-8 text-orange-400">
 ADD COINS HISTORY
 </h4>
 
-<div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+<div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
 
-{paymentRequests
+{
+paymentRequests
 .filter(
 (item) =>
 item.userId === user.uid
@@ -6394,7 +6421,7 @@ item.userId === user.uid
 
 <div
 key={item.id}
-className="bg-[#111] rounded-2xl p-4 mb-3"
+className="bg-[#111] rounded-2xl p-4"
 >
 
 <p className="text-orange-400 font-black">
@@ -6422,18 +6449,13 @@ item.status === "PENDING"
 
 ? "✅ ADD COINS COMPLETED"
 
-: item.status === "REJECTED"
-
-? "❌ ADD COINS REJECTED"
-
-: item.status
+: "❌ ADD COINS REJECTED"
 }
 
 </p>
 
 <p className="text-gray-500 text-sm mt-2">
-🕒 Request:
-{item.createdAt}
+🕒 {item.createdAt}
 </p>
 
 {
@@ -6449,64 +6471,109 @@ item.completedTime && (
 
 </div>
 
-))}
+))
+}
 
 </div>
 
-      </div>
+</div>
+
+{/* RIGHT SIDE */}
+
+<div className="bg-black rounded-3xl p-6 border border-green-500/10 flex items-center justify-center">
+
+<div className="text-center">
+
+<h3 className="text-3xl font-black text-green-400 mb-4">
+💸 WITHDRAW
+</h3>
+
+<p className="text-gray-400">
+Click Withdraw Button Above
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+)
+}
 
 
 
+{/* ================= WITHDRAW POPUP ================= */}
 
-      <div className="bg-black rounded-3xl p-6 border border-green-500/10 h-[130vh]">
+{
+showWithdrawPopup && (
 
-        <h3 className="text-3xl font-black text-green-400 mb-6">
-          WITHDRAW
-        </h3>
+<div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
 
-        <input
-          type="number"
-          placeholder="Withdraw Amount"
-          value={withdrawAmount}
-          onChange={(e) =>
-            setWithdrawAmount(
-              e.target.value
-            )
-          }
-          className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none"
-        />
+<div className="bg-[#111] w-full max-w-2xl rounded-3xl p-6 border border-red-500/20 max-h-[90vh] overflow-y-auto">
 
-        <input
-          type="text"
-          placeholder="Your UPI ID"
-          value={withdrawUpi}
-          onChange={(e) =>
-            setWithdrawUpi(
-              e.target.value
-            )
-          }
-          className="w-full mt-4 bg-[#111] rounded-2xl px-5 py-4 outline-none"
-        />
+<div className="flex justify-between items-center mb-6">
 
-        <button
-          onClick={withdrawRequest}
-          className="w-full mt-6 bg-green-500 text-black py-3 md:py-4 rounded-2xl font-black text-sm md:text-base"
-        >
-          WITHDRAW NOW
-        </button>
+<h2 className="text-3xl font-black text-red-400">
+💸 WITHDRAW
+</h2>
 
-       <div className="mt-8">
+<button
+onClick={() =>
+setShowWithdrawPopup(false)
+}
+className="text-white text-3xl"
+>
+✕
+</button>
 
+</div>
 
-{/* ================= WITHDRAW HISTORY ================= */}
+<input
+type="text"
+placeholder="Enter UPI ID"
+value={withdrawUpi}
+onChange={(e) =>
+setWithdrawUpi(
+e.target.value
+)
+}
+className="w-full bg-black rounded-2xl px-4 py-4 outline-none mb-4"
+/>
 
-<h4 className="text-xl font-black mb-4 mt-8">
+<input
+type="number"
+placeholder="Enter Coins"
+value={withdrawAmount}
+onChange={(e) =>
+setWithdrawAmount(
+e.target.value
+)
+}
+className="w-full bg-black rounded-2xl px-4 py-4 outline-none mb-4"
+/>
+
+<button
+onClick={withdrawRequest}
+className="w-full bg-red-500 text-white py-4 rounded-2xl font-black"
+>
+SUBMIT WITHDRAW
+</button>
+
+{/* WITHDRAW HISTORY */}
+
+<h4 className="text-xl font-black mt-8 mb-4">
 WITHDRAW HISTORY
 </h4>
 
-<div className="space-y-3 max-h-[1160px] overflow-y-auto pr-2">
+<div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
 
-{withdrawRequests
+{
+withdrawRequests
 .filter(
 (item) =>
 item.userId === user.uid
@@ -6516,15 +6583,11 @@ item.userId === user.uid
 
 <div
 key={item.id}
-className="bg-[#111] rounded-2xl p-4 mb-3"
+className="bg-black rounded-2xl p-4"
 >
 
 <p className="text-orange-400 font-black">
 🪙 {item.amount} Coins
-</p>
-
-<p className="text-sm text-gray-400 mt-1">
-UPI: {item.upi}
 </p>
 
 <p className={`font-black mt-2 ${
@@ -6546,38 +6609,22 @@ item.status === "PENDING"
 
 : item.status === "COMPLETED"
 
-? "✅ WITHDRAW CMPLT"
+? "✅ WITHDRAW COMPLETED"
 
-: item.status === "REJECTED"
-
-? "❌ WITHDRAW REJECTED"
-
-: item.status
+: "❌ WITHDRAW REJECTED"
 }
 
 </p>
 
 <p className="text-gray-500 text-sm mt-2">
-🕒 Request:
-{item.requestTime}
+🕒 {item.requestTime}
 </p>
-
-{
-item.status === "PENDING" && (
-
-<p className="text-yellow-400 text-sm mt-1">
-⏳ WITHDRAW PENDING:
-{item.createdAt}
-</p>
-
-)
-}
 
 {
 item.completedTime && (
 
 <p className="text-green-400 text-sm mt-1">
-✅ WITHDRAW COMPLETED:
+✅ COMPLETED:
 {item.completedTime}
 </p>
 
@@ -6586,22 +6633,18 @@ item.completedTime && (
 
 </div>
 
-))}
+))
+}
 
 </div>
 
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
+</div>
 
 </div>
 
-)}
+)
+}
+
 {isAdmin && (
 
 <section className="max-w-5xl mx-auto px-6 py-10">
