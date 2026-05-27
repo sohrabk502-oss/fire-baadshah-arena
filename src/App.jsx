@@ -1708,26 +1708,24 @@ console.log(paymentScreenshot);
 
 try {
 
-await fetch(
-`https://api.telegram.org/bot8992852974:AAGlM5_2VojBzr8gRmQ9H3MYMz5-pffbTN8/sendMessage`,
-{
-method: "POST",
+const formData =
+new FormData();
 
-headers: {
-"Content-Type":
-"application/json",
-},
+formData.append(
+"chat_id",
+"5948674075"
+);
 
-body: JSON.stringify({
+formData.append(
+"caption",
 
-chat_id:
-"5948674075",
-
-text:
 `🔥 NEW PAYMENT REQUEST
 
-👤 User:
+👤 User Email:
 ${user.email}
+
+🆔 User UID:
+${user.uid}
 
 💰 Amount:
 ${topupAmount} Coins
@@ -1736,10 +1734,24 @@ ${topupAmount} Coins
 ${utrNumber}
 
 📞 Support:
-8085150673`,
+8085150673`
+);
 
-}),
+formData.append(
+"photo",
+paymentScreenshot
+);
+
+await fetch(
+
+`https://api.telegram.org/bot8992852974:AAGlM5_2VojBzr8gRmQ9H3MYMz5-pffbTN8/sendPhoto`,
+
+{
+method: "POST",
+
+body: formData,
 }
+
 );
 
 } catch (err) {
@@ -3572,16 +3584,16 @@ LIVE
                   </div>
 
                   <div className="flex justify-between">
-                    <span>
-                      Joined Players
-                    </span>
 
-                    <span>
-                      {
-                        item.totalTeams
-                      }
-                    </span>
-                  </div>
+  <span>
+    Joined Players
+  </span>
+
+  <span>
+    {item.joinedCount || 0}/{item.totalTeams}
+  </span>
+
+</div>
 
                   <div className="flex justify-between">
                     <span>
@@ -3650,7 +3662,7 @@ item.tournamentType ===
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.18
+Number(item.currentPrizePool || 0) * 0.18
 )
 }
 
@@ -3670,7 +3682,7 @@ Number(item.totalPrizePool || 0) * 0.18
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.16
+Number(item.currentPrizePool || 0) * 0.16
 )
 }
 
@@ -3690,7 +3702,7 @@ Number(item.totalPrizePool || 0) * 0.16
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.14
+Number(item.currentPrizePool || 0) * 0.14
 )
 }
 
@@ -3710,7 +3722,7 @@ Number(item.totalPrizePool || 0) * 0.14
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.13
+Number(item.currentPrizePool || 0) * 0.13
 )
 }
 
@@ -3730,7 +3742,7 @@ Number(item.totalPrizePool || 0) * 0.13
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.10
+Number(item.currentPrizePool || 0) * 0.10
 )
 }
 
@@ -3748,7 +3760,7 @@ Number(item.totalPrizePool || 0) * 0.10
 
 <span className="text-pink-400 font-black">
 
-🪙 {Math.floor(Number(item.totalPrizePool || 0) / 10)} 
+🪙 {Math.floor(Number(item.currentPrizePool || 0) / 10)} 
 
 </span>
 
@@ -3773,7 +3785,7 @@ item.tournamentType ===
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.40
+Number(item.currentPrizePool || 0) * 0.40
 )
 }
 
@@ -3790,9 +3802,9 @@ Number(item.totalPrizePool || 0) * 0.40
 🪙 {
 Math.floor(
 (
-Number(item.totalPrizePool || 0) -
+Number(item.currentPrizePool || 0) -
 (
-Number(item.totalPrizePool || 0) * 0.40
+Number(item.currentPrizePool || 0) * 0.40
 )
 ) * 0.30
 )
@@ -3811,15 +3823,15 @@ Number(item.totalPrizePool || 0) * 0.40
 🪙 {
 Math.floor(
 (
-Number(item.totalPrizePool || 0) -
+Number(item.currentPrizePool || 0) -
 (
-Number(item.totalPrizePool || 0) * 0.40
+Number(item.currentPrizePool || 0) * 0.40
 ) -
 (
 (
-Number(item.totalPrizePool || 0) -
+Number(item.currentPrizePool || 0) -
 (
-Number(item.totalPrizePool || 0) * 0.40
+Number(item.currentPrizePool || 0) * 0.40
 )
 ) * 0.30
 )
@@ -3840,29 +3852,29 @@ Number(item.totalPrizePool || 0) * 0.40
 🪙 {
 Math.floor(
 (
-Number(item.totalPrizePool || 0) -
+Number(item.currentPrizePool || 0) -
 (
-Number(item.totalPrizePool || 0) * 0.40
+Number(item.currentPrizePool || 0) * 0.40
 ) -
 (
 (
-Number(item.totalPrizePool || 0) -
+Number(item.currentPrizePool || 0) -
 (
-Number(item.totalPrizePool || 0) * 0.40
+Number(item.currentPrizePool || 0) * 0.40
 )
 ) * 0.30
 ) -
 (
 (
-Number(item.totalPrizePool || 0) -
+Number(item.currentPrizePool || 0) -
 (
-Number(item.totalPrizePool || 0) * 0.40
+Number(item.currentPrizePool || 0) * 0.40
 ) -
 (
 (
-Number(item.totalPrizePool || 0) -
+Number(item.currentPrizePool || 0) -
 (
-Number(item.totalPrizePool || 0) * 0.40
+Number(item.currentPrizePool || 0) * 0.40
 )
 ) * 0.30
 )
@@ -3881,7 +3893,7 @@ Number(item.totalPrizePool || 0) * 0.40
 <span>💸 Losers</span>
 
 <span className="text-pink-400">
-🪙 {Math.floor(Number(item.totalPrizePool || 0) / 10)} 
+🪙 {Math.floor(Number(item.currentPrizePool || 0) / 10)} 
 </span>
 
 </div>
@@ -3905,7 +3917,7 @@ item.tournamentType ===
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.50
+Number(item.currentPrizePool || 0) * 0.50
 )
 }
 
@@ -3921,7 +3933,7 @@ Number(item.totalPrizePool || 0) * 0.50
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.30
+Number(item.currentPrizePool || 0) * 0.30
 )
 }
 
@@ -3937,7 +3949,7 @@ Number(item.totalPrizePool || 0) * 0.30
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) * 0.20
+Number(item.currentPrizePool || 0) * 0.20
 )
 }
 
@@ -3966,7 +3978,7 @@ item.tournamentType ===
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0)
+Number(item.currentPrizePool || 0)
 )
 }
 
@@ -3984,7 +3996,7 @@ Number(item.totalPrizePool || 0)
 
 🪙 {
 Math.floor(
-Number(item.totalPrizePool || 0) / 4
+Number(item.currentPrizePool || 0) / 4
 )
 } Each
 
@@ -4013,7 +4025,7 @@ item.tournamentType ===
 
 🪙 {
 Math.floor(
-item.totalPrizePool
+item.currentPrizePool || 0
 )
 }
 
@@ -4031,7 +4043,7 @@ item.totalPrizePool
 
 🪙 {
 Math.floor(
-item.totalPrizePool / 3
+item.currentPrizePool / 3
 )
 }
 
@@ -4280,7 +4292,7 @@ title:
 "ROOM DETAILS AVAILABLE 🔥",
 
 message:
-`Room ID: ${roomId} | Password: ${roomPassword}`,
+`Room ID: ${roomInputs[item.id]?.roomId} | Password: ${roomInputs[item.id]?.roomPassword}`,
 
 time:
 new Date().toLocaleString(),
@@ -5336,6 +5348,36 @@ user.email
   <p className="text-orange-400">
   SLOT:
   {item.selectedSlot}
+</p>
+
+<p className="text-green-400 font-black mt-2">
+🏆 Won Coins:
+
+🪙 {
+
+playerResults
+
+.filter(
+(result) =>
+
+result.tournamentId === item.tournamentId &&
+
+result.userId === user?.uid &&
+
+result.approved === true
+)
+
+.reduce(
+(total, result) =>
+
+total +
+Number(result.winCoins || 0),
+
+0
+)
+
+}
+
 </p>
 
   <p className="text-blue-400 mt-4">
@@ -6767,7 +6809,11 @@ item.status === "PENDING"
 
 ? "text-green-400"
 
-: "text-red-400"
+: item.status === "REJECTED"
+
+? "text-red-400"
+
+: "text-green-400"
 }`}>
 
 {
@@ -6779,7 +6825,11 @@ item.status === "PENDING"
 
 ? "✅ ADD COINS COMPLETED"
 
-: "❌ ADD COINS REJECTED"
+: item.status === "REJECTED"
+
+? "❌ ADD COINS REJECTED"
+
+: "✅ ADD COINS COMPLETED"
 }
 
 </p>
