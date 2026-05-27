@@ -403,13 +403,9 @@ const [winnerScreenshot,
   setWinnerScreenshot] =
   useState(null);
 
-  const [roomId,
-setRoomId] =
-useState("");
-
-const [roomPassword,
-setRoomPassword] =
-useState("");
+  const [roomInputs,
+setRoomInputs] =
+useState({});
 
 const [notifications,
 setNotifications] =
@@ -432,13 +428,17 @@ const [selectedResultTournament,
   setSelectedResultTournament] =
   useState(null);
 
-  const [resultPosition,
-setResultPosition] =
-useState("");
+  const [showResultPopup,
+setShowResultPopup] =
+useState(false);
 
-const [resultScreenshot,
-setResultScreenshot] =
+const [selectedPublishTournament,
+setSelectedPublishTournament] =
 useState(null);
+
+  const [resultInputs,
+setResultInputs] =
+useState({});
   // ================= AUTO PRIZE CALCULATION =================
 
   useEffect(() => {
@@ -1998,8 +1998,8 @@ return;
 }
 
 if (
-!resultPosition ||
-!resultScreenshot
+!resultInputs[tournament.id]?.position ||
+!resultInputs[tournament.id]?.screenshot
 ) {
 
 alert(
@@ -2020,7 +2020,7 @@ formData.append(
 
 formData.append(
 "photo",
-resultScreenshot
+resultInputs[tournament.id]?.screenshot
 );
 
 formData.append(
@@ -2035,7 +2035,7 @@ ${playerData?.name}
 ${tournament.tournamentTitle}
 
 📍 Position:
-#${resultPosition}`
+#${resultInputs[tournament.id]?.position}`
 
 );
 
@@ -2070,7 +2070,7 @@ playerData?.name ||
 "Unknown",
 
 position:
-resultPosition,
+resultInputs[tournament.id]?.position,
 
 screenshot:
 "TELEGRAM",
@@ -2085,10 +2085,15 @@ alert(
 "Result Submitted 🔥"
 );
 
-setResultPosition("");
+setResultInputs(
+(prev) => ({
+...prev,
 
-setResultScreenshot(
-null
+[tournament.id]: {
+position: "",
+screenshot: null,
+},
+})
 );
 
 } catch (error) {
@@ -4097,12 +4102,25 @@ Submit your final match position with screenshot proof
 type="number"
 placeholder="Enter Your Position"
 
-value={resultPosition}
+value={
+resultInputs[item.id]?.position || ""
+}
 
 onChange={(e) =>
-setResultPosition(
-e.target.value
+
+setResultInputs(
+(prev) => ({
+...prev,
+
+[item.id]: {
+...prev[item.id],
+
+position:
+e.target.value,
+},
+})
 )
+
 }
 
 className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none mb-4"
@@ -4113,8 +4131,17 @@ type="file"
 accept="image/*"
 
 onChange={(e) =>
-setResultScreenshot(
-e.target.files[0]
+setResultInputs(
+(prev) => ({
+...prev,
+
+[item.id]: {
+...prev[item.id],
+
+screenshot:
+e.target.files[0],
+},
+})
 )
 }
 
@@ -4122,10 +4149,11 @@ className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none mb-4"
 />
 
 {
-resultScreenshot && (
+resultInputs[item.id]?.screenshot && (
 
 <p className="text-green-400 text-sm mb-4">
-✅ {resultScreenshot.name}
+  
+✅ {resultInputs[item.id]?.screenshot?.name}
 </p>
 
 )
@@ -4159,12 +4187,25 @@ isAdmin && (
 type="text"
 placeholder="Room ID"
 
-value={roomId}
+value={
+roomInputs[item.id]?.roomId || ""
+}
 
 onChange={(e) =>
-setRoomId(
-e.target.value
+
+setRoomInputs(
+(prev) => ({
+...prev,
+
+[item.id]: {
+...prev[item.id],
+
+roomId:
+e.target.value,
+},
+})
 )
+
 }
 
 className="w-full bg-[#111] rounded-2xl px-4 py-3 outline-none mb-3"
@@ -4174,12 +4215,25 @@ className="w-full bg-[#111] rounded-2xl px-4 py-3 outline-none mb-3"
 type="text"
 placeholder="Room Password"
 
-value={roomPassword}
+value={
+roomInputs[item.id]?.roomPassword || ""
+}
 
 onChange={(e) =>
-setRoomPassword(
-e.target.value
+
+setRoomInputs(
+(prev) => ({
+...prev,
+
+[item.id]: {
+...prev[item.id],
+
+roomPassword:
+e.target.value,
+},
+})
 )
+
 }
 
 className="w-full bg-[#111] rounded-2xl px-4 py-3 outline-none"
@@ -4197,8 +4251,11 @@ database,
 `liveTournaments/${item.id}`
 ),
 {
-roomId,
-roomPassword,
+roomId:
+roomInputs[item.id]?.roomId || "",
+
+roomPassword:
+roomInputs[item.id]?.roomPassword || "",
 }
 );
 
@@ -4258,6 +4315,365 @@ PUBLISH ROOM DETAILS
 {isAdmin && (
 
 <>
+
+{/* PUBLISH RESULT BUTTON */}
+
+<button
+
+onClick={() => {
+
+setSelectedPublishTournament(
+item
+);
+
+setShowResultPopup(
+true
+);
+
+}}
+
+className="w-full mt-6 bg-purple-500 text-black py-4 rounded-2xl font-black"
+>
+
+🏆 PUBLISH RESULT
+
+</button>
+
+
+
+{/* CANCEL MATCH */}
+
+<button
+
+onClick={async () => {
+
+try {
+
+const tournamentPlayers =
+
+joinedPlayers.filter(
+(player) =>
+
+player.tournamentId ===
+item.id
+);
+
+for (const player of tournamentPlayers) {
+
+const userRef =
+ref(
+database,
+`users/${player.userId}`
+);
+
+const userSnap =
+await get(userRef);
+
+const userData =
+userSnap.val();
+
+await update(
+userRef,
+{
+coins:
+Number(
+userData?.coins || 0
+) +
+Number(item.entryFee || 0),
+}
+);
+
+await push(
+ref(
+database,
+`notifications/${player.userId}`
+),
+{
+title:
+"❌ MATCH CANCELLED",
+
+message:
+`${item.tournamentTitle} cancelled. ${item.entryFee} coins refunded 🔥`,
+
+time:
+new Date().toLocaleString(),
+
+seen: false,
+}
+);
+
+}
+
+await remove(
+ref(
+database,
+`liveTournaments/${item.id}`
+)
+);
+
+alert(
+"Match Cancelled 🔥"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="w-full mt-4 bg-red-500 text-white py-4 rounded-2xl font-black"
+>
+
+❌ CANCEL MATCH
+
+</button>
+
+
+
+{/* RESULT APPROVAL POPUP */}
+
+{
+showResultPopup &&
+
+selectedPublishTournament?.id ===
+item.id && (
+
+<div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+
+<div className="bg-[#111] w-full max-w-5xl rounded-3xl p-6 border border-purple-500/20 max-h-[90vh] overflow-y-auto">
+
+{/* HEADER */}
+
+<div className="flex justify-between items-center mb-8">
+
+<h2 className="text-4xl font-black text-purple-400">
+🏆 RESULT APPROVAL PANEL
+</h2>
+
+<button
+
+onClick={() =>
+setShowResultPopup(false)
+}
+
+className="bg-red-500 text-white px-5 py-2 rounded-2xl font-black"
+>
+
+CLOSE
+
+</button>
+
+</div>
+
+
+
+{/* PENDING REQUESTS */}
+
+<h3 className="text-2xl font-black text-orange-400 mb-6">
+📥 PENDING POSITION REQUESTS
+</h3>
+
+<div className="space-y-4">
+
+{
+playerResults
+
+.filter(
+(player) =>
+
+player.tournamentId ===
+selectedPublishTournament?.id
+)
+
+.map((player) => (
+
+<div
+key={player.id}
+className="bg-black rounded-3xl p-5 border border-orange-500/10"
+>
+
+<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+<div>
+
+<p className="text-orange-400 font-black text-xl">
+👤 {player.playerName}
+</p>
+
+<p className="text-white mt-2">
+🏆 Submitted Position:
+#{player.position}
+</p>
+
+<p className="text-gray-400 mt-2 text-sm">
+🕒 {player.createdAt}
+</p>
+
+{
+player.approved && (
+
+<p className="text-green-400 font-black mt-3">
+✅ APPROVED POSITION:
+#{player.approvedPosition}
+</p>
+
+)
+}
+
+</div>
+
+<div className="flex gap-3">
+
+{
+!player.approved && (
+
+<button
+
+onClick={async () => {
+
+try {
+
+await update(
+ref(
+database,
+`playerResults/${player.id}`
+),
+{
+approved: true,
+
+approvedPosition:
+player.position,
+}
+);
+
+alert(
+"Position Approved 🔥"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="bg-green-500 text-black px-5 py-3 rounded-2xl font-black"
+>
+
+✅ APPROVE
+
+</button>
+
+)
+}
+
+<button
+
+onClick={async () => {
+
+try {
+
+await remove(
+ref(
+database,
+`playerResults/${player.id}`
+)
+);
+
+alert(
+"Result Rejected ❌"
+);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}}
+
+className="bg-red-500 text-white px-5 py-3 rounded-2xl font-black"
+>
+
+❌ REJECT
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+))
+}
+
+</div>
+
+
+
+{/* APPROVED PLAYERS */}
+
+<h3 className="text-2xl font-black text-green-400 mt-10 mb-6">
+✅ APPROVED PLAYERS
+</h3>
+
+<div className="space-y-4">
+
+{
+playerResults
+
+.filter(
+(player) =>
+
+player.tournamentId ===
+selectedPublishTournament?.id &&
+
+player.approved === true
+)
+
+.map((player) => (
+
+<div
+key={player.id}
+className="bg-black rounded-3xl p-5 border border-green-500/10"
+>
+
+<div className="flex justify-between items-center">
+
+<div>
+
+<p className="text-green-400 font-black text-xl">
+👤 {player.playerName}
+</p>
+
+<p className="text-white mt-2">
+🏆 Approved Position:
+#{player.approvedPosition}
+</p>
+
+</div>
+
+<span className="text-green-400 font-black text-xl">
+✅ VERIFIED
+</span>
+
+</div>
+
+</div>
+
+))
+}
+
+</div>
+
+
+
+{/* FINAL PUBLISH */}
+
 <button
 
 onClick={async () => {
@@ -4269,27 +4685,38 @@ playerResults.filter(
 (player) =>
 
 player.tournamentId ===
-item.id &&
+selectedPublishTournament?.id &&
 
 player.approved === true
 );
 
+if (
+winners.length === 0
+) {
+
+alert(
+"No Approved Players ❌"
+);
+
+return;
+
+}
+
 const uniqueWinners =
-[
-...new Map(
+winners.filter(
+(player, index, self) =>
 
-winners.map(
-(player) => [
-player.userId,
-player
-]
+index ===
+self.findIndex(
+(p) =>
+p.userId ===
+player.userId
 )
-
-).values()
-];
+);
 
 for (const player of uniqueWinners) {
-  const playerRef =
+
+const playerRef =
 ref(
 database,
 `users/${player.userId}`
@@ -4301,18 +4728,19 @@ await get(playerRef);
 const playerData =
 playerSnap.val();
 
-
 let winCoins = 0;
 
 const mode =
-item.tournamentType;
+selectedPublishTournament?.tournamentType;
 
 const totalPool =
 Number(
-item.currentPrizePool || 0
+selectedPublishTournament?.currentPrizePool || 0
 );
 
-// SOLO
+
+
+/* SOLO */
 
 if (
 mode === "SOLO"
@@ -4353,7 +4781,9 @@ totalPool * 0.14
 
 }
 
-// DUO
+
+
+/* DUO */
 
 else if (
 mode === "DUO"
@@ -4372,7 +4802,9 @@ Math.floor(
 
 }
 
-// SQUAD
+
+
+/* SQUAD */
 
 else if (
 mode === "SQUAD"
@@ -4391,7 +4823,93 @@ Math.floor(
 
 }
 
-// UPDATE USER
+
+
+/* 3V3 */
+
+else if (
+mode === "3V3"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 3
+);
+
+}
+
+}
+
+
+
+/* 4V4 */
+
+else if (
+mode === "4V4"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 4
+);
+
+}
+
+}
+
+
+
+/* 1V1 */
+
+else if (
+mode === "1V1"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool
+);
+
+}
+
+}
+
+
+
+/* 1V2 */
+
+else if (
+mode === "1V2"
+) {
+
+if (
+Number(player.approvedPosition) === 1
+) {
+
+winCoins =
+Math.floor(
+totalPool / 2
+);
+
+}
+
+}
+
+
+
+/* UPDATE USER */
 
 await update(
 playerRef,
@@ -4424,6 +4942,10 @@ Number(player.approvedPosition) <= 3
 }
 );
 
+
+
+/* NOTIFICATION */
+
 await push(
 ref(
 database,
@@ -4434,7 +4956,7 @@ title:
 "🏆 MATCH RESULT PUBLISHED",
 
 message:
-`You achieved #${player.approvedPosition} in ${item.tournamentTitle}`,
+`You achieved #${player.approvedPosition} and won ${winCoins} coins 🔥`,
 
 time:
 new Date().toLocaleString(),
@@ -4445,10 +4967,46 @@ seen: false,
 
 }
 
+
+
+/* SAVE RESULT */
+
+await push(
+ref(
+database,
+"matchResults"
+),
+{
+tournamentTitle:
+item.tournamentTitle,
+
+tournamentId:
+item.id,
+
+tournamentType:
+item.tournamentType,
+
+map:
+item.selectedMap,
+
+results:
+uniqueWinners,
+
+createdAt:
+new Date().toLocaleString(),
+
+completed: true,
+}
+);
+
+
+
+/* COMPLETE MATCH */
+
 await update(
 ref(
 database,
-`liveTournaments/${item.id}`
+`liveTournaments/${selectedPublishTournament?.id}`
 ),
 {
 resultPublished: true,
@@ -4457,8 +5015,10 @@ completed: true,
 );
 
 alert(
-"Result Published Successfully 🔥"
+"🏆 RESULT PUBLISHED SUCCESSFULLY 🔥"
 );
+
+setShowResultPopup(false);
 
 } catch (error) {
 
@@ -4468,107 +5028,20 @@ alert(error.message);
 
 }}
 
-className="w-full mt-6 bg-purple-500 text-black py-4 rounded-2xl font-black"
+className="w-full mt-10 bg-purple-500 text-black py-5 rounded-3xl font-black text-2xl"
 >
 
-PUBLISH RESULT
+🏆 FINAL PUBLISH RESULT
 
 </button>
 
-<button
+</div>
 
-onClick={async () => {
+</div>
 
-try {
-
-// FETCH JOINED PLAYERS
-
-const tournamentPlayers =
-
-joinedPlayers.filter(
-(player) =>
-
-player.tournamentId ===
-item.id
-);
-
-// REFUND ALL PLAYERS
-
-for (const player of tournamentPlayers) {
-
-const userRef =
-ref(
-database,
-`users/${player.userId}`
-);
-
-const userSnap =
-await get(userRef);
-
-const userData =
-userSnap.val();
-
-await update(
-userRef,
-{
-coins:
-Number(
-userData?.coins || 0
-) +
-Number(item.entryFee || 0),
-}
-);
-
-// SEND NOTIFICATION
-
-await push(
-ref(
-database,
-`notifications/${player.userId}`
-),
-{
-title:
-"❌ MATCH CANCELLED",
-
-message:
-`${item.tournamentTitle} was cancelled. Your ${item.entryFee} coins refunded successfully.`,
-
-time:
-new Date().toLocaleString(),
-
-seen: false,
-}
-);
-
-}
-
-// DELETE TOURNAMENT
-
-await remove(
-ref(
-database,
-`liveTournaments/${item.id}`
 )
-);
-
-alert(
-"Match Cancelled & Coins Refunded 🔥"
-);
-
-} catch (error) {
-
-alert(error.message);
-
 }
 
-}}
-
-className="w-full mt-4 bg-red-500 text-white py-4 rounded-2xl font-black"
->
-
-❌ CANCEL MATCH
-
-</button>
 </>
 
 )}
@@ -5366,8 +5839,7 @@ PLAYER RESULT SUBMISSIONS
 playerResults
 .filter(
 (item) =>
-item.tournamentId ===
-selectedResultTournament.id
+player.tournamentId === selectedPublishTournament?.id
 )
 .map((item) => (
 
@@ -5795,12 +6267,25 @@ UPLOAD YOUR RESULT
 type="number"
 placeholder="Your Position"
 
-value={resultPosition}
+value={
+resultInputs[item.id]?.position || ""
+}
 
 onChange={(e) =>
-setResultPosition(
-e.target.value
+
+setResultInputs(
+(prev) => ({
+...prev,
+
+[item.id]: {
+...prev[item.id],
+
+position:
+e.target.value,
+},
+})
 )
+
 }
 
 className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none mb-4"
@@ -5810,8 +6295,17 @@ className="w-full bg-[#111] rounded-2xl px-5 py-4 outline-none mb-4"
 type="file"
 
 onChange={(e) =>
-setResultScreenshot(
-e.target.files[0]
+setResultInputs(
+(prev) => ({
+...prev,
+
+[item.id]: {
+...prev[item.id],
+
+screenshot:
+e.target.files[0],
+},
+})
 )
 }
 
@@ -6050,449 +6544,15 @@ APPROVE POSITION
 
 <button
 
-onClick={async () => {
+onClick={() => {
 
-try {
-
-let winnerImageUrl = "";
-
-if (winnerScreenshot) {
-
-const imageRef =
-storageRef(
-storage,
-`winnerResults/${Date.now()}`
+setSelectedPublishTournament(
+item
 );
 
-await uploadBytes(
-imageRef,
-winnerScreenshot
+setShowResultPopup(
+true
 );
-
-winnerImageUrl =
-await getDownloadURL(
-imageRef
-);
-
-}
-
-const approvedPlayers =
-playerResults.filter(
-(player) =>
-
-player.tournamentId ===
-item.id &&
-
-player.approved === true
-);
-
-if (
-approvedPlayers.length === 0
-) {
-
-alert(
-"No Approved Results ❌"
-);
-
-return;
-
-}
-
-const finalResults = [];
-
-for (const player of approvedPlayers) {
-
-let winCoins = 0;
-
-const totalPool =
-Number(
-item.currentPrizePool || 0
-);
-
-// SOLO
-
-if (
-item.tournamentType ===
-"SOLO"
-) {
-
-if (
-Number(player.approvedPosition) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool * 0.18
-);
-
-}
-
-else if (
-Number(player.approvedPosition) === 2
-) {
-
-winCoins =
-Math.floor(
-totalPool * 0.16
-);
-
-}
-
-else if (
-Number(player.approvedPosition) === 3
-) {
-
-winCoins =
-Math.floor(
-totalPool * 0.14
-);
-
-}
-
-else if (
-
-Number(player.approvedPosition) >= 4 &&
-
-Number(player.approvedPosition) <= 5
-
-) {
-
-winCoins =
-Math.floor(
-totalPool * 0.13
-);
-
-}
-
-else if (
-
-Number(player.approvedPosition) >= 6 &&
-
-Number(player.approvedPosition) <= 10
-
-) {
-
-winCoins =
-Math.floor(
-totalPool * 0.10
-);
-
-}
-
-else if (
-
-Number(player.approvedPosition) >= 11 &&
-
-Number(player.approvedPosition) <= 20
-
-) {
-
-winCoins =
-Math.floor(
-totalPool / 10
-);
-
-}
-
-}
-
-// DUO
-
-else if (
-item.tournamentType ===
-"DUO"
-) {
-
-if (
-Number(player.approvedPosition) === 1
-) {
-
-winCoins =
-Math.floor(
-(totalPool * 0.40) / 2
-);
-
-}
-
-else if (
-Number(player.approvedPosition) === 2
-) {
-
-winCoins =
-Math.floor(
-(totalPool * 0.30) / 2
-);
-
-}
-
-else if (
-Number(player.approvedPosition) === 3
-) {
-
-winCoins =
-Math.floor(
-(totalPool * 0.20) / 2
-);
-
-}
-
-}
-
-// SQUAD
-
-else if (
-item.tournamentType ===
-"SQUAD"
-) {
-
-if (
-Number(player.approvedPosition) === 1
-) {
-
-winCoins =
-Math.floor(
-(totalPool * 0.50) / 4
-);
-
-}
-
-else if (
-Number(player.approvedPosition) === 2
-) {
-
-winCoins =
-Math.floor(
-(totalPool * 0.30) / 4
-);
-
-}
-
-else if (
-Number(player.approvedPosition) === 3
-) {
-
-winCoins =
-Math.floor(
-(totalPool * 0.20) / 4
-);
-
-}
-
-}
-
-// 4V4
-
-else if (
-item.tournamentType ===
-"4V4"
-) {
-
-if (
-Number(player.approvedPosition) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool / 4
-);
-
-}
-
-}
-
-// 3V3
-
-else if (
-item.tournamentType ===
-"3V3"
-) {
-
-if (
-Number(player.approvedPosition) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool / 3
-);
-
-}
-
-}
-
-// 1V1
-
-else if (
-item.tournamentType ===
-"1V1"
-) {
-
-if (
-Number(player.approvedPosition) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool
-);
-
-}
-
-}
-
-// 1V2
-
-else if (
-item.tournamentType ===
-"1V2"
-) {
-
-if (
-player.selectedSlot ===
-"SOLO" &&
-
-Number(player.approvedPosition) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool
-);
-
-}
-
-else if (
-player.selectedSlot ===
-"DUO" &&
-
-Number(player.approvedPosition) === 1
-) {
-
-winCoins =
-Math.floor(
-totalPool / 2
-);
-
-}
-
-}
-
-const userRef =
-doc(
-db,
-"users",
-player.userId
-);
-
-await updateDoc(
-userRef,
-{
-coins:
-increment(winCoins),
-
-wins:
-increment(
-Number(player.approvedPosition) === 1
-? 1
-: 0
-),
-
-top3:
-increment(
-Number(player.approvedPosition) <= 3
-? 1
-: 0
-),
-}
-);
-
-finalResults.push({
-
-name:
-player.playerName,
-
-position:
-player.approvedPosition,
-
-coins:
-winCoins,
-
-});
-
-await push(
-ref(
-database,
-`notifications/${player.userId}`
-),
-{
-title:
-"🏆 RESULT PUBLISHED",
-
-message:
-`You achieved #${player.approvedPosition} and won ${winCoins} coins 🔥`,
-
-time:
-new Date().toLocaleString(),
-
-seen: false,
-}
-);
-
-}
-
-await push(
-ref(
-database,
-"matchResults"
-),
-{
-tournamentTitle:
-item.tournamentTitle,
-
-tournamentId:
-item.id,
-
-tournamentType:
-item.tournamentType,
-
-map:
-item.selectedMap,
-
-results:
-finalResults,
-
-screenshot:
-winnerImageUrl ||
-"No Screenshot",
-
-createdAt:
-new Date()
-.toLocaleString(),
-
-completed: "true",
-}
-);
-
-await update(
-ref(
-database,
-`liveTournaments/${item.id}`
-),
-{
-completed: true,
-resultPublished: true,
-}
-);
-
-alert(
-"Result Published Successfully 🔥"
-);
-
-} catch (error) {
-
-alert(error.message);
-
-}
 
 }}
 
@@ -6502,6 +6562,8 @@ className="w-full mt-8 bg-purple-500 text-black py-4 rounded-2xl font-black"
 🏆 PUBLISH RESULT
 
 </button>
+
+
 
 </>
 
