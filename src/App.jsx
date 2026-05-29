@@ -70,6 +70,7 @@ export default function FireBaadshahArena() {
 
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
+  
 
   // ================= LOGIN =================
 
@@ -242,6 +243,11 @@ setWithdrawToDate
 
 const [showContact, setShowContact] =
   useState(false);
+
+  const [
+showTutorialPopup,
+setShowTutorialPopup
+] = useState(true);
 
   const [showHistory, setShowHistory] =
   useState(false);
@@ -2620,7 +2626,16 @@ ARENA
           {user ? (
 
             <div className="flex flex-wrap items-center justify-center gap-3">
-              
+
+            <button
+onClick={() =>
+setShowTutorialPopup(true)
+}
+className="bg-red-500/20 text-red-400 px-5 py-2 rounded-2xl font-black hover:bg-red-500 hover:text-black duration-300"
+>
+📺 TUTORIAL
+</button>
+
         <button
         onClick={() =>
         setShowWallet(true)
@@ -2730,6 +2745,69 @@ notifications.filter(
         </div>
 
       </nav>
+
+{
+showTutorialPopup && (
+
+<div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 px-4">
+
+<div className="bg-[#111] border border-orange-500/20 rounded-[35px] p-6 w-full max-w-md text-center">
+
+<h2 className="text-3xl font-black text-orange-500 mb-4">
+🔥 FIRE BAADSHAH TUTORIAL
+</h2>
+
+<p className="text-gray-300 mb-6 leading-7">
+Tournament join karne aur coins add karne ka full tutorial dekho.
+</p>
+
+<div className="flex flex-col gap-4">
+
+<a
+href="https://youtube.com/@badshahxfire?si=2W6NAS_gV7e-6rFJ"
+target="_blank"
+className="bg-red-600 hover:bg-red-700 py-4 rounded-2xl font-black duration-300"
+>
+▶️ SUBSCRIBE CHANNEL🔴
+</a>
+
+<a
+href="https://youtu.be/Wsm-tRdDK7Q"
+target="_blank"
+className="bg-orange-500 hover:bg-orange-600 text-black py-4 rounded-2xl font-black duration-300"
+>
+🚀 HOW TO ADD COINS
+</a>
+
+<a
+href="https://youtu.be/mqKouEZIsdY"
+target="_blank"
+className="bg-green-500 hover:bg-green-600 text-black py-4 rounded-2xl font-black duration-300"
+>
+💵 HOW TO WITHDRAW
+</a>
+
+<button
+onClick={() =>
+setShowTutorialPopup(false)
+}
+className="bg-gray-800 hover:bg-gray-700 py-4 rounded-2xl font-black duration-300"
+>
+❌ CLOSE
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+)
+}
+
+{/* HERO */}
+
 
 {/* NOTIFICATIONS */}
 
@@ -5181,6 +5259,8 @@ Coins
 }
 
 </div>
+
+
 
 </section>
 
