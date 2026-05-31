@@ -144,6 +144,181 @@ const [customPrize,
 
   const [liveTournaments, setLiveTournaments] =
     useState([]);
+
+    const [
+mathTournaments,
+setMathTournaments
+] = useState([]);
+
+const [
+mathJoinedPlayers,
+setMathJoinedPlayers
+] = useState([]);
+
+const [
+mathResults,
+setMathResults
+] = useState([]);
+
+const [
+mathLeaderboard,
+setMathLeaderboard
+] = useState([]);
+
+const [
+currentPlayerRank,
+setCurrentPlayerRank
+] = useState(null);
+
+useEffect(() => {
+
+if (user && mathLeaderboard.length > 0) {
+
+const playerIndex =
+
+mathLeaderboard.findIndex(
+(item) =>
+item.uid === user.uid
+);
+
+setCurrentPlayerRank(
+playerIndex + 1
+);
+
+}
+
+}, [user, mathLeaderboard]);
+
+const [
+mathWinnersPaid,
+setMathWinnersPaid
+] = useState(false);
+
+const [
+completedMathTournaments,
+setCompletedMathTournaments
+] = useState([]);
+
+const [
+userMathHistory,
+setUserMathHistory
+] = useState([]);
+
+const [
+selectedMathTournament,
+setSelectedMathTournament
+] = useState(null);
+
+const [
+showMathPlay,
+setShowMathPlay
+] = useState(false);
+
+const [
+mathCheatDetected,
+setMathCheatDetected
+] = useState(false);
+
+const [
+mathGameStarted,
+setMathGameStarted
+] = useState(false);
+
+const [
+currentMathTournament,
+setCurrentMathTournament
+] = useState(null);
+
+const [
+mathGameLive,
+setMathGameLive
+] = useState(false);
+
+const [
+mathQuestions,
+setMathQuestions
+] = useState([]);
+
+const [
+usedQuestions,
+setUsedQuestions
+] = useState([]);
+
+const [
+currentQuestionIndex,
+setCurrentQuestionIndex
+] = useState(0);
+
+const [
+currentQuestion,
+setCurrentQuestion
+] = useState(null);
+
+const [
+userMathAnswer,
+setUserMathAnswer
+] = useState("");
+
+const [
+correctAnswers,
+setCorrectAnswers
+] = useState(0);
+
+const [
+showMathResult,
+setShowMathResult
+] = useState(false);
+
+const [
+mathFinalTime,
+setMathFinalTime
+] = useState(0);
+
+const [
+questionTimer,
+setQuestionTimer
+] = useState(21);
+
+const [
+mathSubmitting,
+setMathSubmitting
+] = useState(false);
+
+const [
+mathTitle,
+setMathTitle
+] = useState("");
+
+const [
+mathEntryFee,
+setMathEntryFee
+] = useState("");
+
+const [
+mathPrizePool,
+setMathPrizePool
+] = useState("");
+
+const [
+mathStartTime,
+setMathStartTime
+] = useState("");
+
+const [
+mathTop1,
+setMathTop1
+] = useState("");
+
+const [
+mathTop2,
+setMathTop2
+] = useState("");
+
+const [
+mathTop3,
+setMathTop3
+] = useState("");
+
     const [coins, setCoins] =
   useState(0);
 
@@ -650,6 +825,35 @@ setTimeout(() => {
 
 }, [user]);
 
+useEffect(() => {
+
+const started =
+
+localStorage.getItem(
+"mathGameStarted"
+);
+
+if (started === "true") {
+
+setMathCheatDetected(
+true
+);
+
+setShowMathPlay(
+false
+);
+
+localStorage.removeItem(
+"mathGameStarted"
+);
+
+alert(
+"🚫 Refresh Cheat Detected"
+);
+
+}
+
+}, []);
   // ================= AUTH STATE =================
 
  useEffect(() => {
@@ -1153,6 +1357,295 @@ item.completed !== "true"
     );
 
   }, []);
+
+  useEffect(() => {
+
+const mathRef =
+ref(
+database,
+"mathTournaments"
+);
+
+onValue(
+mathRef,
+
+(snapshot) => {
+
+if (
+snapshot.exists()
+) {
+
+setMathTournaments(
+
+Object.entries(
+snapshot.val()
+).map(
+
+([id, item]) => ({
+
+id,
+...item,
+
+})
+)
+
+);
+
+}
+
+else {
+
+setMathTournaments([]);
+
+}
+
+}
+
+);
+
+}, []);
+useEffect(() => {
+
+if (!showMathPlay)
+return;
+
+if (questionTimer <= 0) {
+
+handleNextQuestion();
+
+return;
+
+}
+
+const timer =
+setInterval(() => {
+
+setQuestionTimer(
+(prev) => prev - 1
+);
+
+}, 1000);
+
+return () =>
+clearInterval(timer);
+
+}, [
+questionTimer,
+showMathPlay
+]);
+
+useEffect(() => {
+
+const detectTabChange =
+() => {
+
+if (
+document.hidden
+) {
+
+setMathCheatDetected(
+true
+);
+
+setShowMathPlay(
+false
+);
+
+alert(
+"🚫 Cheat Detected"
+);
+
+}
+
+};
+
+document.addEventListener(
+"visibilitychange",
+detectTabChange
+);
+
+return () => {
+
+document.removeEventListener(
+"visibilitychange",
+detectTabChange
+);
+
+};
+
+}, []);
+
+useEffect(() => {
+
+const interval =
+setInterval(() => {
+
+const now =
+Date.now();
+
+mathTournaments.forEach(
+(item) => {
+
+const start =
+new Date(
+item.startTime
+).getTime();
+
+const end =
+start +
+30 *
+60 *
+1000;
+
+if (
+now >= start &&
+now <= end
+) {
+
+setMathGameLive(
+true
+);
+
+setCurrentMathTournament(
+item
+);
+if (
+now > end &&
+!mathWinnersPaid
+) {
+
+const tournamentResults =
+
+mathLeaderboard.filter(
+(player) =>
+
+player.tournamentId ===
+item.id
+);
+
+const winners =
+tournamentResults
+.slice(0, 3);
+
+winners.forEach(
+async (
+winner,
+index
+) => {
+
+let winCoins = 0;
+
+if (index === 0) {
+
+winCoins =
+Number(
+item.top1 || 0
+);
+
+}
+
+else if (
+index === 1
+) {
+
+winCoins =
+Number(
+item.top2 || 0
+);
+
+}
+
+else {
+
+winCoins =
+Number(
+item.top3 || 0
+);
+
+}
+
+const userRef =
+ref(
+database,
+`users/${winner.uid}`
+);
+
+const userSnap =
+await get(
+userRef
+);
+
+const userData =
+userSnap.val();
+
+await update(
+userRef,
+{
+coins:
+Number(
+userData?.coins || 0
+) +
+winCoins,
+}
+);
+
+await push(
+ref(
+database,
+`notifications/${winner.uid}`
+),
+{
+title:
+"🏆 MATH TOURNAMENT WIN",
+
+message:
+`You won ${winCoins} coins in ${item.title}`,
+
+time:
+new Date()
+.toLocaleString(),
+
+seen: false,
+}
+);
+
+}
+);
+
+setMathWinnersPaid(
+true
+);
+
+setCompletedMathTournaments(
+(prev) => [
+
+...prev,
+
+item
+
+]
+);
+
+}
+}
+else {
+
+setMathGameLive(
+false
+);
+
+}
+
+});
+
+}, 1000);
+
+return () =>
+clearInterval(
+interval
+);
+
+}, [mathTournaments]);
 // ================= FETCH PAYMENT REQUESTS =================
 
 useEffect(() => {
@@ -1344,6 +1837,112 @@ setNotifications([]);
 );
 
 }, [user]);
+useEffect(() => {
+
+const resultRef =
+ref(
+database,
+"mathResults"
+);
+
+onValue(
+resultRef,
+
+(snapshot) => {
+
+if (
+snapshot.exists()
+) {
+
+const allResults = [];
+
+Object.entries(
+snapshot.val()
+).forEach(
+
+([tournamentId, players]) => {
+
+Object.entries(
+players
+).forEach(
+
+([id, item]) => {
+
+allResults.push({
+
+id,
+
+tournamentId,
+
+...item,
+
+});
+
+}
+
+);
+
+}
+
+);
+
+const sorted =
+
+allResults.sort(
+(a, b) => {
+
+if (
+b.score !==
+a.score
+) {
+
+return (
+b.score -
+a.score
+);
+
+}
+
+return (
+a.time -
+b.time
+);
+
+}
+);
+
+setMathLeaderboard(
+sorted
+);
+
+}
+
+else {
+
+setMathLeaderboard([]);
+if (user) {
+
+const myHistory =
+
+sorted.filter(
+(item) =>
+
+item.uid ===
+user.uid
+);
+
+setUserMathHistory(
+myHistory
+);
+
+}
+}
+
+}
+
+);
+
+}, []);
 
 useEffect(() => {
 
@@ -1587,6 +2186,402 @@ return;
 
       alert("Logged Out");
     };
+
+    
+    const generateMathQuestions =
+() => {
+
+const operators =
+["+", "-", "*"];
+
+const generated = [];
+
+while (
+generated.length < 20
+) {
+
+const num1 =
+Math.floor(
+Math.random() * 100
+) + 1;
+
+const num2 =
+Math.floor(
+Math.random() * 50
+) + 1;
+
+const operator =
+
+operators[
+Math.floor(
+Math.random() *
+operators.length
+)
+];
+
+let answer = 0;
+
+if (operator === "+") {
+
+answer =
+num1 + num2;
+
+}
+
+else if (
+operator === "-"
+) {
+
+answer =
+num1 - num2;
+
+}
+
+else {
+
+answer =
+num1 * num2;
+
+}
+
+const question = {
+
+question:
+`${num1} ${operator} ${num2}`,
+
+answer:
+answer.toString(),
+
+};
+
+const alreadyUsed =
+
+usedQuestions.find(
+(item) =>
+
+item.question ===
+question.question
+);
+
+if (!alreadyUsed) {
+
+generated.push(
+question
+);
+
+}
+
+}
+
+setMathQuestions(
+generated
+);
+
+setCurrentQuestionIndex(
+0
+);
+
+setCurrentQuestion(
+generated[0]
+);
+
+};
+
+const joinMathTournament =
+async (item) => {
+
+if (!user) {
+
+alert(
+"Login Required"
+);
+
+return;
+
+}
+
+if (
+Number(playerData?.coins || 0)
+<
+Number(item.entryFee)
+) {
+
+alert(
+"Not Enough Coins"
+);
+
+return;
+
+}
+
+const joinRef =
+ref(
+database,
+`mathJoinedPlayers/${item.id}/${user.uid}`
+);
+
+await set(
+joinRef,
+
+{
+uid: user.uid,
+
+name:
+playerData?.name ||
+"Player",
+
+email:
+user.email,
+
+joinedAt:
+Date.now(),
+}
+);
+
+await update(
+ref(
+database,
+`users/${user.uid}`
+),
+
+{
+coins:
+Number(
+playerData?.coins || 0
+) -
+Number(item.entryFee),
+}
+);
+
+alert(
+"🧠 Joined Math Tournament"
+);
+
+};
+const handleNextQuestion =
+async () => {
+
+  if (mathSubmitting)
+return;
+
+setMathSubmitting(
+true
+);
+
+if (
+userMathAnswer ===
+currentQuestion?.answer
+) {
+
+setCorrectAnswers(
+(prev) => prev + 1
+);
+
+}
+
+const nextIndex =
+
+currentQuestionIndex + 1;
+
+if (
+nextIndex >=
+mathQuestions.length
+) {
+
+  setMathFinalTime(
+(20 * 21) -
+questionTimer
+);
+
+setShowMathResult(
+true
+);
+
+const playAgain =
+
+window.confirm(
+`🎉 Match Finished
+
+Score:
+${correctAnswers}/20
+
+Play Again?`
+);
+
+if (playAgain) {
+
+setUsedQuestions(
+(prev) => [
+
+...prev,
+
+...mathQuestions
+
+]
+);
+
+generateMathQuestions();
+
+setCorrectAnswers(
+0
+);
+
+setQuestionTimer(
+21
+);
+
+setUserMathAnswer("");
+
+return;
+
+}
+const totalTimeUsed =
+
+(
+20 * 21
+) - questionTimer;
+
+await push(
+
+ref(
+database,
+`mathResults/${selectedMathTournament.id}`
+),
+
+{
+uid:
+user.uid,
+
+name:
+playerData?.name ||
+"Player",
+
+score:
+correctAnswers,
+
+time:
+totalTimeUsed,
+
+createdAt:
+Date.now(),
+}
+);
+
+setShowMathPlay(
+false
+);
+
+return;
+
+}
+
+setCurrentQuestionIndex(
+nextIndex
+);
+
+setCurrentQuestion(
+mathQuestions[nextIndex]);
+
+setUserMathAnswer("");
+
+setQuestionTimer(21);
+
+setMathSubmitting(
+false
+);
+
+};
+
+    const createMathTournament =
+async () => {
+
+if (
+!mathTitle ||
+!mathEntryFee ||
+!mathPrizePool ||
+!mathStartTime
+) {
+
+alert(
+"Fill All Fields"
+);
+
+return;
+
+}
+
+const newRef =
+push(
+ref(
+database,
+"mathTournaments"
+)
+);
+
+await set(
+newRef,
+
+{
+title:
+mathTitle,
+
+entryFee:
+Number(
+mathEntryFee
+),
+
+prizePool:
+Number(
+mathPrizePool
+),
+
+startTime:
+mathStartTime,
+
+top1:
+Number(
+mathTop1 || 0
+),
+
+top2:
+Number(
+mathTop2 || 0
+),
+
+top3:
+Number(
+mathTop3 || 0
+),
+
+status:
+"upcoming",
+
+createdAt:
+Date.now(),
+
+});
+
+alert(
+"🧠 Math Tournament Created"
+);
+
+setMathTitle("");
+
+setMathEntryFee("");
+
+setMathPrizePool("");
+
+setMathStartTime("");
+
+setMathTop1("");
+
+setMathTop2("");
+
+setMathTop3("");
+
+};
+
+
     // ================= JOIN HISTORY =================
 
 useEffect(() => {
@@ -2574,7 +3569,7 @@ return (
 🚧
 </h1>
 
-<h2 className="text-5xl font-black text-white mt-6">
+<h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mt-6">
 SERVER UNDER
 MAINTENANCE
 </h2>
@@ -2593,13 +3588,13 @@ The server is currently undergoing maintenance, please check back later
 
 }
   return (
-   <div className="bg-black min-h-screen text-white overflow-x-hidden">
+   <div className="bg-black min-h-screen w-full text-white overflow-x-hidden">
 
       {/* NAVBAR */}
 
       <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-orange-500/10">
 
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 flex flex-col md:flex-row gap-5 md:gap-0 items-center justify-between">
+        <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-5 lg:px-8 py-4 flex flex-col lg:flex-row gap-4 items-center justify-between">
 
           <div className="flex items-center gap-3">
 
@@ -2980,9 +3975,9 @@ NO NOTIFICATIONS
 
       {/* HERO */}
 
-      <section className="text-center py-24 px-6">
+      <section className="w-full text-center py-16 sm:py-24 px-4 sm:px-6">
 
-        <h1 className="text-4xl md:text-7xl font-black leading-tight">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-tight">
 
           FIRE BAADSHAH <br />
 
@@ -3036,9 +4031,9 @@ India's Free Fire Esports Tournament Platform
       {
 isAdmin && (
 
-<section className="max-w-7xl mx-auto px-6 py-10">
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-<h2 className="text-5xl font-black text-red-400 mb-10">
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-red-400 mb-10">
 📊 RESULT ANALYTICS
 </h2>
 
@@ -3137,9 +4132,9 @@ Prize Distributed
 
       {/* GAME MODES */}
 
-<section className="max-w-7xl mx-auto px-6 pt-10">
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
 
-  <div className="flex gap-4 overflow-x-auto pb-4">
+  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
 
    {[
   {
@@ -3156,6 +4151,11 @@ Prize Distributed
     name: "SQUAD",
     image: squadImg,
   },
+
+{
+name: "OTHER GAMES",
+image: "https://cdn-icons-png.flaticon.com/512/2721/2721297.png",
+},
 
   {
     name: "1V1",
@@ -3213,15 +4213,339 @@ Prize Distributed
 
 </section>
 
+{
+selectedMode ===
+"OTHER GAMES" && (
+
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-purple-400 mb-12">
+
+🧠 OTHER GAMES
+
+</h2>
+
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+
+{
+mathTournaments.map(
+(item) => (
+
+<div
+key={item.id}
+
+className="bg-[#111] rounded-[35px] p-6 border border-purple-500/20"
+>
+
+<div className="flex items-center justify-between mb-5">
+
+<span className="bg-purple-500/20 text-purple-400 px-4 py-2 rounded-full text-sm font-black">
+
+{
+item.status
+}
+
+</span>
+
+</div>
+
+<h3 className="text-3xl font-black mb-4 text-purple-400">
+
+🧠 {item.title}
+
+</h3>
+
+<div className="space-y-4 text-lg">
+
+<div className="flex justify-between">
+
+<span>
+💰 Entry
+</span>
+
+<span className="text-orange-400 font-black">
+
+🪙 {item.entryFee}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+🏆 Prize Pool
+</span>
+
+<span className="text-yellow-400 font-black">
+
+🪙 {item.prizePool}
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+⏰ Start
+</span>
+
+<span className="text-green-400 font-black">
+
+{
+new Date(
+item.startTime
+).toLocaleString()
+}
+
+</span>
+
+</div>
+
+</div>
+
+<button
+
+onClick={() =>
+joinMathTournament(
+item
+)
+}
+
+className="w-full mt-6 bg-purple-500 text-black py-4 rounded-2xl font-black"
+>
+
+🚀 JOIN NOW
+
+</button>
+
+{
+mathGameLive &&
+
+currentMathTournament?.id ===
+item.id &&
+
+user &&
+
+mathJoinedPlayers?.find(
+(player) =>
+
+player.uid ===
+user.uid
+) && (
+
+<button
+
+onClick={() => {
+
+setSelectedMathTournament(
+item
+);
+
+generateMathQuestions();
+
+setShowMathPlay(
+true
+);
+
+setMathGameStarted(
+true
+);
+
+localStorage.setItem(
+"mathGameStarted",
+"true"
+);
+
+}}
+
+className="w-full mt-4 bg-green-500 text-black py-4 rounded-2xl font-black"
+>
+
+🎮 PLAY NOW
+
+</button>
+
+)
+}
+
+</div>
+
+)
+)
+}
+</div>
+
+</section>
+
+)
+}
+{
+selectedMode ===
+"OTHER GAMES" && (
+
+<>
+
+{
+isAdmin && (
+
+<section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+
+<div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 border border-purple-500/20">
+
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-purple-400 text-center mb-10">
+
+🧠 CREATE MATH TOURNAMENT
+
+</h2>
+
+<div className="grid md:grid-cols-2 gap-6">
+
+<input
+type="text"
+placeholder="Tournament Title"
+
+value={mathTitle}
+
+onChange={(e) =>
+setMathTitle(
+e.target.value
+)
+}
+
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<input
+type="number"
+placeholder="Entry Fee"
+
+value={mathEntryFee}
+
+onChange={(e) =>
+setMathEntryFee(
+e.target.value
+)
+}
+
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<input
+type="number"
+placeholder="Prize Pool"
+
+value={mathPrizePool}
+
+onChange={(e) =>
+setMathPrizePool(
+e.target.value
+)
+}
+
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<input
+type="datetime-local"
+
+value={mathStartTime}
+
+onChange={(e) =>
+setMathStartTime(
+e.target.value
+)
+}
+
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<input
+type="number"
+placeholder="Top 1 Prize"
+
+value={mathTop1}
+
+onChange={(e) =>
+setMathTop1(
+e.target.value
+)
+}
+
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<input
+type="number"
+placeholder="Top 2 Prize"
+
+value={mathTop2}
+
+onChange={(e) =>
+setMathTop2(
+e.target.value
+)
+}
+
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+<input
+type="number"
+placeholder="Top 3 Prize"
+
+value={mathTop3}
+
+onChange={(e) =>
+setMathTop3(
+e.target.value
+)
+}
+
+className="bg-black rounded-2xl px-5 py-4 outline-none"
+/>
+
+</div>
+
+<button
+
+onClick={
+createMathTournament
+}
+
+className="w-full mt-8 bg-purple-500 text-black py-4 rounded-2xl font-black"
+>
+
+🚀 CREATE MATH TOURNAMENT
+
+</button>
+
+</div>
+
+</section>
+
+)
+}
+
+</>
+
+)
+}
+{
+selectedMode !==
+"OTHER GAMES" && (
+<>
+
 {/* UPCOMING TOURNAMENTS */}
 
-<section className="max-w-7xl mx-auto px-6 py-20">
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
 
-<h2 className="text-5xl font-black text-green-400 mb-12">
+<h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-green-400 mb-12">
 🔥 {selectedMode} UPCOMING MATCHES
 </h2>
 
-<div className="grid md:grid-cols-3 gap-8">
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
 
 {liveTournaments
 
@@ -3576,16 +4900,660 @@ className="w-full mt-4 bg-red-500 hover:bg-red-400 duration-300 text-white py-4 
 </div>
 
 </section>
+</>
 
+)
+}
+
+{
+showMathPlay && (
+
+<section className="fixed inset-0 bg-black z-50 overflow-auto">
+
+<div className="max-w-4xl mx-auto px-6 py-20">
+
+<div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 border border-purple-500/20">
+
+<h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-center text-purple-400 mb-10">
+
+🧠 MATH BATTLE
+
+</h2>
+
+<div className="space-y-6">
+
+<div className="bg-black rounded-3xl p-5 border border-yellow-500/20">
+
+<h3 className="text-2xl font-black text-yellow-400 mb-5">
+<div className="bg-[#111] rounded-2xl p-4 mb-5 text-center">
+
+<h2 className="text-3xl font-black text-green-400">
+
+🏆 YOUR RANK
+
+</h2>
+
+<h1 className="text-6xl font-black text-yellow-400 mt-3">
+
+#
+{
+currentPlayerRank || "--"
+}
+
+</h1>
+
+</div>
+🏆 LIVE RANKING
+
+</h3>
+
+<div className="space-y-3">
+
+{
+mathLeaderboard
+.slice(0, 5)
+.map(
+(item, index) => (
+
+<div
+
+key={item.id}
+
+className="flex items-center justify-between bg-[#111] rounded-2xl px-4 py-3"
+>
+
+<div>
+
+<h3 className="font-black text-lg">
+
+#{index + 1}
+
+{" "}
+
+{item.name}
+
+</h3>
+
+</div>
+
+<div className="text-right">
+
+<p className="text-green-400 font-black">
+
+{item.score}/20
+
+</p>
+
+<p className="text-gray-400 text-sm">
+
+⏱ {item.time}s
+
+</p>
+
+</div>
+
+</div>
+
+)
+)
+}
+
+</div>
+
+</div>
+
+
+<div className="bg-black rounded-3xl p-8 text-center">
+
+<h3 className="text-4xl font-black text-orange-400">
+
+<h3 className="text-2xl text-gray-400 mb-4 font-black">
+
+Question
+
+{
+currentQuestionIndex + 1
+}
+
+/ 20
+
+</h3>
+
+<h2 className="text-6xl font-black text-orange-400">
+
+{
+currentQuestion?.question
+}
+
+</h2>
+
+<p className="text-green-400 text-3xl font-black mt-6">
+
+⏰ {questionTimer}s
+
+</p>
+
+</h3>
+
+</div>
+
+<div className="grid grid-cols-2 gap-6">
+
+<div className="space-y-4">
+
+<input
+
+type="number"
+
+value={userMathAnswer}
+
+onChange={(e) =>
+setUserMathAnswer(
+e.target.value
+)
+}
+
+placeholder="Enter Answer"
+
+className="w-full bg-black rounded-2xl px-6 py-5 outline-none text-center text-3xl font-black"
+/>
+
+<button
+
+onClick={
+handleNextQuestion
+}
+
+className="w-full bg-purple-500 py-4 rounded-2xl text-black font-black"
+>
+
+SUBMIT ANSWER
+
+</button>
+
+</div>
+
+<button
+
+onClick={() =>
+setShowMathPlay(
+false
+)
+}
+
+className="bg-red-500 py-4 rounded-2xl text-black font-black"
+>
+
+EXIT
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+)
+}
+{
+selectedMode ===
+"OTHER GAMES" &&
+
+mathLeaderboard.length > 0 && (
+
+<section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+<div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 border border-yellow-500/20">
+
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-yellow-400 text-center mb-10">
+
+🏆 MATH LEADERBOARD
+
+</h2>
+
+<div className="space-y-5">
+
+{
+mathLeaderboard
+.slice(0, 10)
+.map(
+(item, index) => (
+
+<div
+
+key={item.id}
+
+className="bg-black rounded-3xl p-5 flex items-center justify-between"
+>
+
+<div>
+
+<h3 className="text-2xl font-black text-white">
+
+#{index + 1}
+
+{item.name}
+
+</h3>
+
+<p className="text-gray-400">
+
+⏱ {item.time}s
+
+</p>
+
+</div>
+
+<div className="text-right">
+
+<h2 className="text-3xl font-black text-green-400">
+
+{item.score}/20
+
+</h2>
+
+</div>
+
+</div>
+
+)
+)
+}
+
+</div>
+
+</div>
+
+</section>
+
+)
+}
+
+{
+showMathResult && (
+
+<section className="fixed inset-0 bg-black z-[60] overflow-auto">
+
+<div className="max-w-3xl mx-auto px-6 py-20">
+
+<div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 border border-green-500/20 text-center">
+
+<h2 className="text-6xl font-black text-green-400 mb-10">
+
+🏆 MATCH RESULT
+
+</h2>
+
+<div className="space-y-6">
+
+<div className="bg-black rounded-3xl p-6">
+
+<h3 className="text-2xl text-gray-400 font-black">
+
+✅ SCORE
+
+</h3>
+
+<h1 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-orange-400 mt-4">
+
+{correctAnswers}/20
+
+</h1>
+
+</div>
+
+<div className="grid md:grid-cols-2 gap-6">
+
+<div className="bg-black rounded-3xl p-6">
+
+<h3 className="text-xl text-gray-400 font-black">
+
+⏱ TOTAL TIME
+
+</h3>
+
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-yellow-400 mt-4">
+
+{mathFinalTime}s
+
+</h2>
+
+</div>
+
+<div className="bg-black rounded-3xl p-6">
+
+<h3 className="text-xl text-gray-400 font-black">
+
+🎯 ACCURACY
+
+</h3>
+
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-green-400 mt-4">
+
+{
+Math.floor(
+(correctAnswers / 20) * 100
+)
+}%
+
+</h2>
+
+</div>
+
+</div>
+
+<div className="grid md:grid-cols-2 gap-6 pt-4">
+
+<button
+
+onClick={() => {
+
+setShowMathResult(
+false
+);
+
+setUsedQuestions(
+(prev) => [
+
+...prev,
+
+...mathQuestions
+
+]
+);
+
+generateMathQuestions();
+
+setCorrectAnswers(
+0
+);
+
+setQuestionTimer(
+21
+);
+
+setShowMathPlay(
+true
+);
+
+}}
+
+className="bg-purple-500 py-5 rounded-3xl text-black font-black text-2xl"
+>
+
+🔁 PLAY AGAIN
+
+</button>
+
+<button
+
+onClick={() => {
+
+setShowMathResult(
+false
+);
+
+setShowMathPlay(
+false
+);
+
+}}
+
+className="bg-red-500 py-5 rounded-3xl text-black font-black text-2xl"
+>
+
+❌ CLOSE
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+)
+}
+
+{
+selectedMode ===
+"OTHER GAMES" &&
+
+completedMathTournaments.length > 0 && (
+
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-red-400 mb-12">
+
+🏁 COMPLETED MATH MATCHES
+
+</h2>
+
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+
+{
+completedMathTournaments.map(
+(item) => {
+
+const winners =
+
+mathLeaderboard
+.filter(
+(player) =>
+
+player.tournamentId ===
+item.id
+)
+.slice(0, 3);
+
+return (
+
+<div
+
+key={item.id}
+
+className="bg-[#111] rounded-[35px] p-6 border border-red-500/20"
+>
+
+<div className="flex items-center justify-between mb-5">
+
+<span className="bg-red-500/20 text-red-400 px-4 py-2 rounded-full text-sm font-black">
+
+COMPLETED
+
+</span>
+
+</div>
+
+<h3 className="text-3xl font-black mb-6 text-red-400">
+
+🧠 {item.title}
+
+</h3>
+
+<div className="space-y-4">
+
+{
+winners.map(
+(winner, index) => (
+
+<div
+
+key={winner.id}
+
+className="bg-black rounded-2xl p-4"
+>
+
+<h3 className="text-xl font-black text-yellow-400">
+
+#{index + 1}
+
+{" "}
+
+{winner.name}
+
+</h3>
+
+<p className="text-green-400 mt-2">
+
+Score:
+{winner.score}/20
+
+</p>
+
+<p className="text-gray-400">
+
+⏱ {winner.time}s
+
+</p>
+
+</div>
+
+)
+)
+}
+
+</div>
+
+</div>
+
+);
+
+}
+)
+}
+
+</div>
+
+</section>
+
+)
+}
+{
+selectedMode ===
+"OTHER GAMES" &&
+
+userMathHistory.length > 0 && (
+
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-cyan-400 mb-12">
+
+📜 MY MATH HISTORY
+
+</h2>
+
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+
+{
+userMathHistory
+.slice(0, 12)
+.map(
+(item, index) => (
+
+<div
+
+key={item.id}
+
+className="bg-[#111] rounded-[35px] p-6 border border-cyan-500/20"
+>
+
+<div className="flex items-center justify-between mb-5">
+
+<span className="bg-cyan-500/20 text-cyan-400 px-4 py-2 rounded-full text-sm font-black">
+
+MATCH #{index + 1}
+
+</span>
+
+</div>
+
+<h3 className="text-2xl font-black mb-4 text-cyan-400">
+
+🧠 {item.name}
+
+</h3>
+
+<div className="space-y-4 text-lg">
+
+<div className="flex justify-between">
+
+<span>
+🏆 Score
+</span>
+
+<span className="text-green-400 font-black">
+
+{item.score}/20
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+⏱ Time
+</span>
+
+<span className="text-yellow-400 font-black">
+
+{item.time}s
+
+</span>
+
+</div>
+
+<div className="flex justify-between">
+
+<span>
+📅 Played
+</span>
+
+<span className="text-orange-400 font-black text-sm">
+
+{
+new Date(
+item.createdAt
+).toLocaleDateString()
+}
+
+</span>
+
+</div>
+
+</div>
+
+</div>
+
+)
+)
+}
+
+</div>
+
+</section>
+
+)
+}
       {/* LIVE TOURNAMENTS */}
 
-      <section className="max-w-7xl mx-auto px-6 py-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
 
-        <h2 className="text-5xl font-black text-orange-500 mb-12">
+        <h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-orange-500 mb-12">
           LIVE MATCHES
         </h2>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
 
           {liveTournaments
 .filter((item) => {
@@ -5150,13 +7118,13 @@ className="w-full mt-10 bg-purple-500 text-black py-5 rounded-3xl font-black tex
 
       {/* WINNER LEADERBOARD */}
 
-<section className="max-w-7xl mx-auto px-6 py-20">
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
 
-<h2 className="text-5xl font-black text-yellow-400 mb-12">
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-yellow-400 mb-12">
 🏆 WINNER LEADERBOARD
 </h2>
 
-<div className="grid md:grid-cols-3 gap-8">
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
 
 {
 leaderboard
@@ -7100,9 +9068,9 @@ item.completedTime && (
 
 {isAdmin && (
 
-<section className="max-w-5xl mx-auto px-6 py-10">
+<section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-<div className="bg-[#111] rounded-[40px] p-10 border border-purple-500/10">
+<div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 border border-purple-500/10">
 
 <h2 className="text-4xl font-black text-purple-400 mb-8">
 USER PROFILE CHECK
@@ -7501,7 +9469,7 @@ className="bg-green-500 text-white py-4 rounded-2xl font-black"
 {
 isAdmin && (
 
-<section className="max-w-5xl mx-auto px-6 py-10">
+<section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
 <div className="bg-[#111] rounded-[40px] p-8 border border-red-500/10">
 
@@ -7572,9 +9540,9 @@ MAINTENANCE
 {
 isAdmin && (
 
-<section className="max-w-7xl mx-auto px-6 py-10">
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-<h2 className="text-5xl font-black text-orange-500 mb-10">
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-orange-500 mb-10">
 📊 ADMIN ANALYTICS
 </h2>
 
@@ -7586,7 +9554,7 @@ isAdmin && (
 Total Users
 </p>
 
-<h3 className="text-5xl font-black text-orange-500 mt-4">
+<h3 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-orange-500 mt-4">
 👥 {analytics.totalUsers}
 </h3>
 
@@ -7598,7 +9566,7 @@ Total Users
 Total Tournaments
 </p>
 
-<h3 className="text-5xl font-black text-green-400 mt-4">
+<h3 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-green-400 mt-4">
 🎮 {analytics.totalTournaments}
 </h3>
 
@@ -7610,7 +9578,7 @@ Total Tournaments
 Total Deposits
 </p>
 
-<h3 className="text-5xl font-black text-blue-400 mt-4">
+<h3 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-blue-400 mt-4">
 🪙 {analytics.totalDeposits}
 </h3>
 
@@ -7622,7 +9590,7 @@ Total Deposits
 Total Withdrawals
 </p>
 
-<h3 className="text-5xl font-black text-red-400 mt-4">
+<h3 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-red-400 mt-4">
 💸 {analytics.totalWithdrawals}
 </h3>
 
@@ -7634,7 +9602,7 @@ Total Withdrawals
 Live Matches
 </p>
 
-<h3 className="text-5xl font-black text-yellow-400 mt-4">
+<h3 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-yellow-400 mt-4">
 🔥 {analytics.liveMatches}
 </h3>
 
@@ -7646,7 +9614,7 @@ Live Matches
 Pending Topups
 </p>
 
-<h3 className="text-5xl font-black text-cyan-400 mt-4">
+<h3 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-cyan-400 mt-4">
 ⏳ {analytics.pendingTopups}
 </h3>
 
@@ -7658,7 +9626,7 @@ Pending Topups
 Pending Withdraws
 </p>
 
-<h3 className="text-5xl font-black text-pink-400 mt-4">
+<h3 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-pink-400 mt-4">
 🏦 {analytics.pendingWithdraws}
 </h3>
 
@@ -7670,7 +9638,7 @@ Pending Withdraws
 Admin Revenue
 </p>
 
-<h3 className="text-5xl font-black text-purple-400 mt-4">
+<h3 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-purple-400 mt-4">
 💰 {analytics.adminRevenue}
 </h3>
 
@@ -7688,9 +9656,9 @@ Admin Revenue
 
 {isAdmin && (
 
-<section className="max-w-5xl mx-auto px-6 py-10">
+<section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-<div className="bg-[#111] rounded-[40px] p-10 border border-green-500/10">
+<div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 border border-green-500/10">
 
 <h2 className="text-4xl font-black text-green-400 mb-8">
 MANUAL COINS ADD
@@ -7812,9 +9780,9 @@ WITHDRAW REQUESTS
 {isAdmin &&
 adminPage === "topup" && (
 
-  <section className="max-w-5xl mx-auto px-6 py-20">
+  <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
 
-    <div className="bg-[#111] rounded-[40px] p-10">
+    <div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8">
 
       <h2 className="text-4xl font-black text-orange-500 mb-10">
         PAYMENT REQUESTS
@@ -8025,9 +9993,9 @@ new Date().toLocaleString(),
 {isAdmin &&
 adminPage === "withdraw" && (
 
-<section className="max-w-5xl mx-auto px-6 py-20">
+<section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
 
-  <div className="bg-[#111] rounded-[40px] p-10">
+  <div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8">
 
     <h2 className="text-4xl font-black text-green-400 mb-10">
       WITHDRAW REQUESTS
@@ -8208,13 +10176,13 @@ Status:
 )}
 {/* MATCH RESULTS */}
 
-<section className="max-w-7xl mx-auto px-6 py-20">
+<section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
 
-<h2 className="text-5xl font-black text-purple-400 mb-12">
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-purple-400 mb-12">
 MATCH RESULTS
 </h2>
 
-<div className="grid md:grid-cols-3 gap-8">
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
 
 {[...matchResults]
 
@@ -8359,15 +10327,16 @@ className="text-purple-400 mt-4 block break-all"
 </div>
 
 </section>
+
       {/* CREATE TOURNAMENT */}
 
 {isAdmin && (
 
-<section className="max-w-5xl mx-auto px-6 py-20">
+<section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
 
-<div className="bg-[#111] rounded-[40px] p-10 border border-orange-500/10">
+<div className="bg-[#111] rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 border border-orange-500/10">
 
-<h2 className="text-5xl font-black text-orange-500 text-center mb-10">
+<h2 className="rounded-[30px] sm:rounded-[40px] p-4 sm:p-8 font-black text-orange-500 text-center mb-10">
 🔥 CREATE TOURNAMENT 🔥
 </h2>
 
